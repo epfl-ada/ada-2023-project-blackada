@@ -10,7 +10,7 @@ Below, we describe todos for each individual step of the pipeline, note that res
 The objective of this step is to get a clean dataframe with all the needed columns, we should be able to load this dataframe from a binary file in the future.
 
 - [ ] We need to figure out which columns we want in addition to the text, beer brand, beer name, ratings etc 
-- [ ] We need to figure how the subsampling, because the subsequent steps need to be run only on a smaller dataset since the extraction and embeddings will take some time. We should take into consideration where the users are from, what beer brands we are getting and so on.
+- [ ] We need to figure how the subsampling, because the subsequent steps need to be run only on a smaller dataset since the extraction and embeddings will take some. time. An idea we have is to for instance take only IPAs reviews, and then we will later compare the agreement on the IPA level versus average agreement on the beeer level which are indeed of type IPA. Further, we should make sure that each individual beer has at least X number of reviews.
 
 **EDA**
 
