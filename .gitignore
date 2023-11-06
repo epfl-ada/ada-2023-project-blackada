@@ -1,1 +1,5 @@
 data/BeerAdvocate/*
+BeerAdvocate/*
+.idea/*
+data/
+.DS_Store
