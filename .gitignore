@@ -2,4 +2,6 @@ data/BeerAdvocate/*
 BeerAdvocate/*
 .idea/*
 data/
+raw/
 .DS_Store
+utils/__pycache__
