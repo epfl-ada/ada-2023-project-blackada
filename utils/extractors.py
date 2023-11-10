@@ -1,4 +1,10 @@
-from abc import ABC, abstractmethod
+"""This module contains the ExtractorBase class and its subclasses.
+These classes are used to extract features from a list of spaCy documents
+corresponding to the beer reviews.
+"""
+
+
+from abc import abstractmethod
 from spacy import Doc
 
 class ExtractorBase:
