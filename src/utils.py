@@ -67,7 +67,7 @@ def load_data(data_dir: str, num_samples: int | None = None) -> pd.DataFrame:
         # Load the .feather file
         load_path = os.path.join(data_dir, "reviews.feather")
         reviews = pd.read_feather(load_path)
-        return reviews[:num_samples]
+        return reviews.head(num_samples)
 
     # TODO: Merge relevant parts of this data into the `reviews` DataFrame
     # Load individual data files
@@ -79,7 +79,7 @@ def load_data(data_dir: str, num_samples: int | None = None) -> pd.DataFrame:
     reviews = _load_reviews(os.path.join(data_dir, "reviews.txt"))
     reviews = _preprocess_reviews(reviews)
 
-    # Save to .feather file if num_samples is None
+    # Save to .feather file
     save_path = os.path.join(data_dir, "reviews.feather")
     reviews.to_feather(save_path)
 
