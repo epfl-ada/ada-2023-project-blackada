@@ -1,4 +1,4 @@
-### Unlocking the Palate: Evaluating Taste Consensus Among Beer Reviewers
+## Unlocking the Palate: Evaluating Taste Consensus Among Beer Reviewers
 
 ### Abstract
 Context
