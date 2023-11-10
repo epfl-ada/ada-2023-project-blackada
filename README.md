@@ -26,11 +26,11 @@ Our main project does not require any additional data and will rely entirely on 
 │   - Write and analyse modules for extraction of beer descriptors, embedding, and consensus scores
 │   - Tie together modules in `main.ipynb`
 │   - Write `README.md`
-│
-├── 17.12.2023: 🔴 P2 Deadline (23:59 CET)
 │  
 ├── Week 9: (13.11-19.11):
 │   - ...
+│
+├── 17.11.2023: 🔴 P2 Deadline (23:59 CET)
 │
 ├── Week 10: (20.11-26.11):
 │   - ...
@@ -50,7 +50,6 @@ Our main project does not require any additional data and will rely entirely on 
 ├── 22.12.2023: 🔴 Final Deadline (23:59 CET)
 .
 ```
-
 
 ## 🗿 Internal Milestones
 
