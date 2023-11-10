@@ -2,9 +2,15 @@
 name = "ada-2023-project-blackada"
 version = "0.1.0"
 description = "Unlocking the Palate - Evaluating Taste Consensus Among Beer Reviewers"
-authors = ["Mika Senghaas <mail@mikasenghaas.de>"]
+authors = [
+    "Mika Senghaas <mika.senghaas@epfl.ch>",
+    "Ludek Cizinsky <ludek.cizinsky@epfl.ch>",
+    "Peter Nutter <peter.nutter@epfl.ch>",
+    "Pierre Lardet <pierre.lardet@epfl.ch>",
+    "Christian Bastin <christian.bastin@epfl.ch>",
+]
 readme = "README.md"
-packages = [{include = "ada_2023_project_blackada"}]
+packages = [{ include = "ada_2023_project_blackada" }]
 
 [tool.poetry.dependencies]
 python = "3.10.*"
