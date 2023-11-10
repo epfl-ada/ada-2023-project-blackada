@@ -8,11 +8,25 @@ Given the consensus scores for different groups of beers, we can answer our RQ. 
 
 ### Additional Datasets
 Beer Connoisseur: https://nycdatascience.com/blog/student-works/web-scraping/data-analysis-on-beer-reviews/
+https://beerconnoisseur.com/latest-reviews
+Compare expert beer reviews with the reviews of our dataset...
 
 ### Methods
+...
 
 
 ### Proposed Timeline
+1 | Preparing external dataset.
 
+2 |
+
+3 |
+
+4 |
 
 ### Internal Milestones
+Pierre
+Ludek
+Mika
+Peter
+Chris
