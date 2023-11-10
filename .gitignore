@@ -1,6 +1,13 @@
 # Custom
 data/
 
+# Custom playgrounds
+playground/mika*
+playground/peter*
+playground/ludek*
+playground/christian*
+playground/pierre*
+
 # Cache
 .DS_Store
 
