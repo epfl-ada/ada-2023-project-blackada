@@ -1,4 +1,18 @@
-from abc import abstractmethod
+"""
+Module containing classes and functionality used to embed lists of reviews.
+
+Classes
+-------
+- EmbeddorBase: Abstract base class for all embedders.
+- CountEmbeddor: Uses a count vectorizer from sklearn.
+- TFIDFEmbeddor: Uses a TFIDF vectorizer from sklearn.
+- BERTEmbeddor: Uses 'bert-base-uncased' from HF.
+- SentenceTransformerEmbeddor: Uses 'all-MiniLM-L6-v2' from sentence-transformers.
+
+Functions
+---------
+- _get_torch_device(): Returns the device to be used for PyTorch operations.
+"""
 
 from abc import abstractmethod, ABC
 from enum import Enum
