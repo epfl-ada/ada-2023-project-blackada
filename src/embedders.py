@@ -14,18 +14,19 @@ Functions
 - _get_torch_device(): Returns the device to be used for PyTorch operations.
 """
 
+
 from abc import abstractmethod, ABC
-from enum import Enum
 import numpy as np
-import pandas as pd
 import torch
 from transformers import BertTokenizer, BertModel
 from sentence_transformers import SentenceTransformer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+
 class EmbeddorBase(ABC):
     """Abstract class for all embedders which provides an interface for embedding reviews."""
+    
     def __init__(self) -> None:
         pass
 
@@ -51,9 +52,6 @@ class EmbeddorBase(ABC):
             Array of embeddings.
         """
         pass
-
-
-
 
 
 class CountEmbeddor(EmbeddorBase):
@@ -87,6 +85,7 @@ class CountEmbeddor(EmbeddorBase):
 
 class TFIDFEmbeddor(EmbeddorBase):
     """Embedder which uses a TFIDF vectorizer to transform reviews to TFIDF representations."""
+
     def __init__(self) -> None:
         super().__init__()
         self.transformer = TfidfVectorizer()
@@ -114,6 +113,7 @@ class TFIDFEmbeddor(EmbeddorBase):
 
 class BERTEmbeddor(EmbeddorBase):
     """Embedder which uses BERT to convert reviews to BERT embeddings."""
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -158,8 +158,10 @@ class BERTEmbeddor(EmbeddorBase):
 
         return avg_embedding.cpu().numpy()
     
+
 class SentenceTransformerEmbeddor(EmbeddorBase):
-    """Embedder which uses sentence-transformers to convert reviews to sentence-transformer embeddings."""""
+    """Embedder which uses sentence-transformers to convert reviews to sentence-transformer embeddings."""
+
     def __init__(self) -> None:
         super().__init__()
         self.device = _get_torch_device()
@@ -185,11 +187,13 @@ class SentenceTransformerEmbeddor(EmbeddorBase):
         """
         return self.model.encode(reviews, convert_to_numpy=True)
 
+
 def _get_torch_device() -> torch.device:
     """
     Returns the device to be used for PyTorch operations.
 
-    Returns:
+    Returns
+    -------
         torch.device: Device to be used for PyTorch operations.
     """
     if torch.backends.mps.is_available():
