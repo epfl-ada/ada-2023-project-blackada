@@ -1,5 +1,6 @@
 # Custom
 data/
+raw/*
 
 # Custom playgrounds
 playground/mika*

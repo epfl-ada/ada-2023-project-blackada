@@ -5,7 +5,7 @@ corresponding to the beer reviews.
 
 
 from abc import abstractmethod
-from spacy import Doc
+from spacy.tokens import Doc
 
 
 class ExtractorBase:
