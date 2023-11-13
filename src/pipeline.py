@@ -4,7 +4,7 @@ Text Analysis Workflow Module
 This module introduces the TextAnalysis class, which provides a streamlined workflow for 
 processing text documents. It integrates feature extraction, embedding, and metric computation 
 in a cohesive manner. The class is designed to be flexible, accepting any implementations 
-of extractor, embeddor, and metric calculator that conform to a standard interface.
+of extractor, embedder, and metric calculator that conform to a standard interface.
 """
 
 import numpy as np
@@ -15,21 +15,21 @@ class TextAnalysis:
     """
     A class that integrates text extraction, embedding, and metric computation.
 
-    This class is designed to work with any extractor, embeddor, and metric
+    This class is designed to work with any extractor, embedder, and metric
     computation method, as long as they adhere to a standard interface.
     """
 
-    def __init__(self, extractor: Any, embeddor: Any, metric: Any) -> None:
+    def __init__(self, extractor: Any, embedder: Any, metric: Any) -> None:
         """
-        Initializes the TextAnalysis with specified extractor, embeddor, and metric.
+        Initializes the TextAnalysis with specified extractor, embedder, and metric.
 
         Parameters:
         extractor (Any): An object that implements a transform method for text extraction.
-        embeddor (Any): An object that implements a transform method for embedding the extracted text.
+        embedder (Any): An object that implements a transform method for embedding the extracted text.
         metric (Any): An object that implements a transform method for computing a metric on the embeddings.
         """
         self.extractor = extractor
-        self.embeddor = embeddor
+        self.embedder = embedder
         self.metric = metric
 
     def transform(self, docs: List[str]) -> np.ndarray:
@@ -45,7 +45,7 @@ class TextAnalysis:
         # Extraction
         extracted_texts = self.extractor.transform(docs)
         # Embedding
-        embeddings = self.embeddor.transform(extracted_texts)
+        embeddings = self.embedder.transform(extracted_texts)
         # Similarity Calculation
         self.similarity = self.metric.transform(embeddings)
         return self.similarity

@@ -15,7 +15,7 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 import torch
 
 
-class EmbeddorBase(ABC):
+class EmbedderBase(ABC):
     """
     Abstract base class for text embedding strategies.
 
@@ -31,7 +31,7 @@ class EmbeddorBase(ABC):
         pass
 
 
-class CountEmbeddor(EmbeddorBase):
+class CountEmbedder(EmbedderBase):
     """
     Abstract method to transform text documents into embeddings.
 
@@ -60,9 +60,9 @@ class CountEmbeddor(EmbeddorBase):
         return counts.toarray()
 
 
-class TfidfEmbeddor(EmbeddorBase):
+class TfidfEmbedder(EmbedderBase):
     """
-    Concrete implementation of EmbeddorBase using TF-IDF Vectorization.
+    Concrete implementation of EmbedderBase using TF-IDF Vectorization.
 
     This class converts text documents into a matrix of TF-IDF features.
     """
@@ -85,9 +85,9 @@ class TfidfEmbeddor(EmbeddorBase):
         return tfidf.toarray()
 
 
-class BertEmbeddor(EmbeddorBase):
+class BertEmbedder(EmbedderBase):
     """
-    Concrete implementation of EmbeddorBase using BERT model embeddings.
+    Concrete implementation of EmbedderBase using BERT model embeddings.
 
     Utilizes BERT (Bidirectional Encoder Representations from Transformers) to
     generate embeddings for the given text.
@@ -95,7 +95,7 @@ class BertEmbeddor(EmbeddorBase):
 
     def __init__(self, device: str = "cpu") -> None:
         """
-        Initializes BertEmbeddor with the 'bert-base-uncased' model on the specified device.
+        Initializes BertEmbedder with the 'bert-base-uncased' model on the specified device.
 
         Parameters:
         device (str, optional): The computation device ('cpu' or 'cuda'). Defaults to 'cpu'.
@@ -125,9 +125,9 @@ class BertEmbeddor(EmbeddorBase):
             return avg_embeddings.detach().cpu().numpy()
 
 
-class SentenceTransformerEmbeddor(EmbeddorBase):
+class SentenceTransformerEmbedder(EmbedderBase):
     """
-    Concrete implementation of EmbeddorBase using Sentence Transformers.
+    Concrete implementation of EmbedderBase using Sentence Transformers.
 
     This class uses pre-trained models from the Sentence Transformers library to
     generate embeddings for text.
@@ -135,7 +135,7 @@ class SentenceTransformerEmbeddor(EmbeddorBase):
 
     def __init__(self, device: str = "cpu") -> None:
         """
-        Initializes SentenceTransformerEmbeddor with 'all-MiniLM-L6-v2' model on the specified device.
+        Initializes SentenceTransformerEmbedder with 'all-MiniLM-L6-v2' model on the specified device.
 
         Parameters:
         device (str, optional): The computation device ('cpu' or 'cuda'). Defaults to 'cpu'.
