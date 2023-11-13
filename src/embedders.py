@@ -12,6 +12,7 @@ import numpy as np
 from transformers import BertTokenizer, BertModel
 from sentence_transformers import SentenceTransformer
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+import torch
 
 
 class EmbeddorBase(ABC):
@@ -23,7 +24,7 @@ class EmbeddorBase(ABC):
     """
 
     def __init__(self) -> None:
-        super.__init__()
+        super().__init__()
 
     @abstractmethod
     def transform(self, reviews: List[str]) -> np.ndarray:
@@ -94,7 +95,10 @@ class BertEmbeddor(EmbeddorBase):
 
     def __init__(self, device: str = "cpu") -> None:
         """
-        Initializes the BertEmbeddor with a BERT tokenizer and model.
+        Initializes BertEmbeddor with the 'bert-base-uncased' model on the specified device.
+
+        Parameters:
+        device (str, optional): The computation device ('cpu' or 'cuda'). Defaults to 'cpu'.
         """
         super().__init__()
         self.device = device
@@ -112,12 +116,13 @@ class BertEmbeddor(EmbeddorBase):
         Returns:
         np.ndarray: BERT embeddings of the documents.
         """
-        encoded_inputs = self.tokenizer(
-            reviews, padding=True, truncation=True, return_tensors="pt"
-        ).to(self.device)
-        outputs = self.model(**encoded_inputs, output_hidden_states=True)
-        avg_embeddings = outputs.hidden_states[-2].mean(dim=1)
-        return avg_embeddings.detach().numpy()
+        with torch.no_grad():
+            encoded_inputs = self.tokenizer(
+                reviews, padding=True, truncation=True, return_tensors="pt"
+            ).to(self.device)
+            outputs = self.model(**encoded_inputs, output_hidden_states = True)
+            avg_embeddings = outputs.hidden_states[-2].mean(dim=1)
+            return avg_embeddings.detach().cpu().numpy()
 
 
 class SentenceTransformerEmbeddor(EmbeddorBase):
@@ -128,12 +133,16 @@ class SentenceTransformerEmbeddor(EmbeddorBase):
     generate embeddings for text.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, device: str = "cpu") -> None:
         """
-        Initializes the SentenceTransformerEmbeddor with a pre-trained model.
+        Initializes SentenceTransformerEmbeddor with 'all-MiniLM-L6-v2' model on the specified device.
+
+        Parameters:
+        device (str, optional): The computation device ('cpu' or 'cuda'). Defaults to 'cpu'.
         """
         super().__init__()
-        self.model = SentenceTransformer("all-MiniLM-L6-v2")
+        self.device = device
+        self.model = SentenceTransformer("all-MiniLM-L6-v2").to(device)
 
     def transform(self, reviews: List[str]) -> np.ndarray:
         """
@@ -149,5 +158,5 @@ class SentenceTransformerEmbeddor(EmbeddorBase):
         np.ndarray: An array of embeddings, where each row corresponds to
                     the embedding of a text document in the input list.
         """
-        embeddings = self.model.encode(reviews, convert_to_tensor=True)
-        return embeddings.detach().numpy()
+        embeddings = self.model.encode(reviews, convert_to_tensor=True, device=self.device)
+        return embeddings.detach().cpu().numpy()
