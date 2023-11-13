@@ -120,7 +120,7 @@ class BertEmbeddor(EmbeddorBase):
             encoded_inputs = self.tokenizer(
                 reviews, padding=True, truncation=True, return_tensors="pt"
             ).to(self.device)
-            outputs = self.model(**encoded_inputs, output_hidden_states = True)
+            outputs = self.model(**encoded_inputs, output_hidden_states=True)
             avg_embeddings = outputs.hidden_states[-2].mean(dim=1)
             return avg_embeddings.detach().cpu().numpy()
 
@@ -158,5 +158,7 @@ class SentenceTransformerEmbeddor(EmbeddorBase):
         np.ndarray: An array of embeddings, where each row corresponds to
                     the embedding of a text document in the input list.
         """
-        embeddings = self.model.encode(reviews, convert_to_tensor=True, device=self.device)
+        embeddings = self.model.encode(
+            reviews, convert_to_tensor=True, device=self.device
+        )
         return embeddings.detach().cpu().numpy()

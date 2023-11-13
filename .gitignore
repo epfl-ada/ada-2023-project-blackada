@@ -1,6 +1,7 @@
 # Custom
 data/
 raw/*
+.vscode
 
 # Custom playgrounds
 playground/mika*
