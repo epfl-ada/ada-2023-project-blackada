@@ -24,6 +24,8 @@ seaborn = "^0.13.0"
 matplotlib = "^3.8.1"
 gdown = "^4.7.1"
 pyarrow = "^14.0.1"
+torch = "^2.1.0"
+sentence-transformers = "^2.2.2"
 
 
 [tool.poetry.group.dev.dependencies]
