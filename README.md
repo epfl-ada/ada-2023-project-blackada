@@ -28,7 +28,7 @@ Our main project does not require any additional data and will rely entirely on 
 │   - Write `README.md`
 │  
 ├── Week 9: (13.11-19.11):
-│   - ...
+│   - ([Info about P2](https://epfl-ada.github.io/teaching/fall2023/cs401/projects/))
 │
 ├── 17.11.2023: 🔴 P2 Deadline (23:59 CET)
 │
@@ -39,7 +39,7 @@ Our main project does not require any additional data and will rely entirely on 
 │   - ...
 │
 ├── Week 12: (04.12-10.12):
-│   - ...
+│   - [Consider Adding Ethics Section as Part of the Data Story](https://edstem.org/eu/courses/808/discussion/65545)
 │
 ├── Week 13: (11.12-17.12):
 │   - ...
