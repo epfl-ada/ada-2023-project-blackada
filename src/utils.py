@@ -12,7 +12,21 @@ import gdown
 import pandas as pd
 import gzip
 import shutil
+import subprocess
+from tqdm import tqdm
 
+def get_line_count(file_path):
+    """Quick way of obtaining the number of lines in a (large) file.
+
+    Args:
+        file_path (str): Path to file.
+    
+    Returns:
+        line_count (int): Number of lines in file.
+    """
+    result = subprocess.run(['wc', '-l', file_path], stdout=subprocess.PIPE, text=True)
+    line_count = int(result.stdout.strip().split()[0])
+    return line_count
 
 def download_data(url: str, data_dir: str) -> None:
     """
@@ -69,14 +83,18 @@ def load_data(data_dir: str, num_samples: int | None = None) -> pd.DataFrame:
         reviews = pd.read_feather(load_path)
         return reviews.head(num_samples)
 
-    # TODO: Merge relevant parts of this data into the `reviews` DataFrame
-    # Load individual data files
-    # beers = pd.read_csv(os.path.join(data_dir, "beers.csv"))
-    # breweries = pd.read_csv(os.path.join(data_dir, "breweries.csv"))
-    # users = pd.read_csv(os.path.join(data_dir, "users.csv"))
-
-    # Load and preprocess reviews
+    # Load reviews 
     reviews = _load_reviews(os.path.join(data_dir, "reviews.txt"))
+
+    # Load metainfo for reviews
+    beers, breweries, users = _load_metainfo(data_dir)
+
+    # Merge reviews with metainfo
+    reviews = reviews.merge(beers, on="beer_id", how="left")
+    reviews = reviews.merge(breweries, on="brewery_id", how="left")
+    reviews = reviews.merge(users, on="user_id", how="left")
+
+    # Preprocess reviews
     reviews = _preprocess_reviews(reviews)
 
     # Save to .feather file
@@ -99,12 +117,18 @@ def _load_reviews(file_path: str) -> pd.DataFrame:
 
     Returns:
         pd.DataFrame: DataFrame containing reviews.
+    
+    Notes:
+    Note that we ensure correct casting of values before saving.
+    However, values of type str are casted to object type since
+    string can have different lengths.
     """
     beer_data = []
     current_beer = {}
+    total_count = get_line_count(file_path)
 
     with open(file_path, "r") as file:
-        for line in file:
+        for line in tqdm(file, total=total_count, desc="Loading raw reviews"):
             line = line.strip()
             if not line or ": " not in line:
                 if current_beer:
@@ -112,11 +136,16 @@ def _load_reviews(file_path: str) -> pd.DataFrame:
                     current_beer = {}
             else:
                 key, value = line.split(": ", 1) if ": " in line else (None, None)
-                if key is not None:
+                if key is not None: 
+                    # Cast values to correct types before saving
                     if key == "date":
                         value = pd.to_datetime(int(value), unit="s")
                     elif value in {"True", "False"}:
                         value = value == "True"
+                    elif key in ["beer_id", "brewery_id"]:
+                        value = int(value)
+                    elif key in ["abv", "appearance", "aroma", "palate", "taste", "overall", "rating"]:
+                        value = float(value)
                     current_beer[key] = value
                 else:
                     continue
@@ -160,10 +189,18 @@ def _preprocess_reviews(reviews: pd.DataFrame) -> pd.DataFrame:
         "beer_name",
         "style",
         "abv",
+        "beer_nbr_ratings",
+        "beer_nbr_reviews",
         "brewery_id",
         "brewery_name",
+        "brewery_location",
+        "nbr_beers",
         "user_id",
         "user_name",
+        "user_nbr_ratings",
+        "user_nbr_reviews",
+        "user_joined",
+        "user_location",
         "appearance",
         "aroma",
         "palate",
@@ -174,11 +211,10 @@ def _preprocess_reviews(reviews: pd.DataFrame) -> pd.DataFrame:
         "date",
     ]
     multi_columns = {
-        "beer": ["id", "name", "style", "abv"],
-        "brewery": ["id", "name"],
-        "user": ["id", "name"],
-        "rating": ["appearance", "aroma", "palate", "taste", "overall", "rating"],
-        "review": ["text", "date"],
+        "beer": ["id", "name", "style", "abv", "nbr_ratings", "nbr_reviews"],
+        "brewery": ["id", "name", "location", "nbr_beers"],
+        "user": ["id", "name", "nbr_ratings", "nbr_reviews", "joined", "location"],
+        "review": ["appearance", "aroma", "palate", "taste", "overall", "rating", "text", "date"],
     }
 
     # Create multi-index
@@ -190,3 +226,36 @@ def _preprocess_reviews(reviews: pd.DataFrame) -> pd.DataFrame:
     reviews.columns = multi_index
 
     return reviews
+
+def _load_metainfo(data_dir : str) -> pd.DataFrame:
+
+    """
+    Loads the metainfo from the data directory. And performs basic preprocessing:
+    - Selects relevant columns
+    - Renames columns so that they can be merged with the reviews DataFrame
+    - Converts timestamps to datetime
+
+    Args:
+        data_dir (str): Path of directory containing extracted data.
+    
+    Returns:
+        beers (pd.DataFrame): DataFrame containing beer metainfo.
+        breweries (pd.DataFrame): DataFrame containing brewery metainfo.
+        users (pd.DataFrame): DataFrame containing user metainfo.
+    """
+
+    # Load the raw data
+    beers = pd.read_csv(os.path.join(data_dir, "beers.csv"))
+    breweries = pd.read_csv(os.path.join(data_dir, "breweries.csv"))
+    users = pd.read_csv(os.path.join(data_dir, "users.csv"))
+
+    # Define relevant columns
+    beers = beers[["beer_id", "nbr_ratings", "nbr_reviews"]].rename({"nbr_ratings": "beer_nbr_ratings", "nbr_reviews": "beer_nbr_reviews"}, axis=1)
+    breweries = breweries[["id", "location", "nbr_beers"]].rename({"id": "brewery_id", "location": "brewery_location"}, axis=1)
+    users = users[["nbr_ratings", "nbr_reviews", "user_id", "joined", "location"]].rename({"nbr_ratings": "user_nbr_ratings", "nbr_reviews": "user_nbr_reviews", "location": "user_location"}, axis=1)
+    
+    # Convert timestamps to datetime
+    users["user_joined"] = pd.to_datetime(users["joined"], unit="s")
+    users = users.drop(columns=["joined"])
+
+    return beers, breweries, users
