@@ -9,10 +9,11 @@ Navigating the world of beer reviews can be a daunting task for non-experts. Bee
 - **Overall**: To what extent do beer descriptors in reviews accurately convey the taste experience of a beer?
 - Is there a consensus among reviewers when using specific descriptors for certain beer types, and does this consensus vary across different beer styles?
 - Are there patterns of language use that are consistent across reviews of the same beer type, suggesting a common vocabulary for describing certain beer characteristics?
+- Is there a difference in language use between beers of different qualities? For example, those that have a good aroma but taste worse, or those that are very visually appealing but contain little alcohol. This would suggest that the language use is correlated with the subjective experience of the beer, and therefore the language is meaningful. 
 - How does the level of consensus in language use vary between well-established beer types (e.g., IPA, Stout) and more niche or experimental varieties?
 - How does the consensus in language use vary by the country of the reviewer? Can we uncover a difference in vocabulary dependent on the location where the beer is drank?
 - Does the level of consensus in language use increase or decrease over time for specific beer types, indicating potential shifts in consumer preferences or evolving trends in beer flavors?
-- (Optional: time-permitting) Is the language used in beer reviews by the general public drastically different compared to the language used by beer critics? This might suggest that critics are not necessarily very helpful in conveying interpretable reviews of beers.
+- (Optional) Is the language used in beer reviews by the general public drastically different compared to the language used by beer critics? This might suggest that critics are not necessarily very helpful in conveying interpretable reviews of beers.
 
 
 ## 📚 Additional Datasets
