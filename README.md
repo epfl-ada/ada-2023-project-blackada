@@ -6,31 +6,29 @@ Navigating the world of beer reviews can be a daunting task for non-experts. Bee
 
 ## 🔎 Research Questions
 
-- **Overall**: To what extent do beer descriptors in reviews accurately convey the taste experience of a beer?
-- Is there a consensus among reviewers when using specific descriptors for certain beer types, and does this consensus vary across different beer styles?
-- Are there patterns of language use that are consistent across reviews of the same beer type, suggesting a common vocabulary for describing certain beer characteristics?
-- Is there a difference in language use between beers of different qualities? For example, those that have a good aroma but taste worse, or those that are very visually appealing but contain little alcohol. This would suggest that the language use is correlated with the subjective experience of the beer, and therefore the language is meaningful. 
-- How does the level of consensus in language use vary between well-established beer types (e.g., IPA, Stout) and more niche or experimental varieties?
-- How does the consensus in language use vary by the country of the reviewer? Can we uncover a difference in vocabulary dependent on the location where the beer is drank?
-- Does the level of consensus in language use increase or decrease over time for specific beer types, indicating potential shifts in consumer preferences or evolving trends in beer flavors?
-- (Optional) Is the language used in beer reviews by the general public drastically different compared to the language used by beer critics? This might suggest that critics are not necessarily very helpful in conveying interpretable reviews of beers.
-
+- **Primary**: Do beer descriptors in reviews relate to the taste experience of a beer?
+- Is there a consensus among reviewers when using specific descriptors for certain beer types and specific beers?
+- Are there patterns of language use across reviews of the same beers, suggesting a common vocabulary for describing certain beer characteristics?
+- How does the consensus in language use vary by the country of the reviewe or over time?
+- (Optional) Is the language use drastically different between the beer community and beer critics?
 
 ## 📚 Additional Datasets
 
-Our main project does not require any additional data and will rely solely on the BeerAdvocate dataset. However, we have identified a potential additional dataset on the [BeerCritic](http://www.thebeercritic.com/) website that we might use further down the road, time permitting. The website contains expert reviews by selected beer critics. We could use these reviews to investigate if there is a similar consensus between 'lay-reviewers' and critics in order to question how useful critics are to the average person.
+Our main project does not require any additional data and will rely solely on the BeerAdvocate dataset. However, we have identified a potential additional dataset on the [BeerCritic](http://www.thebeercritic.com/) website that might be used, time permitting. The website contains expert reviews by selected beer critics which we can use to question how useful critics are to the average person.
 
 ## 🔮 Methods
 
 ### EDA 
 
+//TODO: Add EDA we do
+
 We first explore the dataset to investigate the features relevant to the project. We look at the following:
 
 - The length of textual reviews
-- The location of users
+- The location of breweries
 - The dsitribution of different beer types
 - 
-### Text Pre-processing
+### Text Pre-Processing
 
 `//TODO:` @Ludek fill in the relevant options with brief detail
 
@@ -69,63 +67,54 @@ Further details and potential pros/cons of each model are discussed in `main.ipy
 
 ### Consensus Calculation
 
-Given a list of embeddings of reviews, a consensus score can be calculated using 2 different methods: 
+To quantify the similarity between beer reviews, we use the mean pair-wise cosine similarity within a set of embeddings.
 
-- Pair-wise Cosine Similarity
-
-We can measure the cosine similarity between each pair of reviews. This metric measures the cosine of the angle between two vectors and ranges from 0 (no similarity) to 1 (complete similarity).
-
-- Pair-wise Euclidean distance
-
-Alternatively, we can use the euclidean distance, which may also take into account the 'strength' (i.e. magnitude) of the embedding. 
-
-### Grouping Analysis 
+### Analysis 
 
 We can calculate consensus scores for different subsets of the beer reviews and compare. The following variables will be investigated:
 
-- Beer type (IPA, Stout etc)
+- Beer style (IPA, Stout etc)
 - Specific beer
 - Location of review
 - Size of brewery
 - Quantative metrics of the beers (Rating, Overall, Appearance, Aroma, Palate, Taste, ABV)
+- The time of the review 
 
 ### Interpretation
 
-A significant enough difference in consensus indicates that the language use is different. Given that we group by different categories of beer reviews, this could mean that the language has meaning related to the groups. A simple example might be that, if the word 'clear' is used more often in IPA beer reviews, then 'clear' is a meaningful word. 
+A difference in consensus between group and a subgroup of reviews indicates the the language used in the subgroup is more speciic. Given that we group by different categories of beer reviews, this could mean that the language has meaning related to the groups. A simple example might be that, if the word 'clear' is used more often in IPA beer reviews than in the whole dataset, then 'clear' is a meaningful word.
 
-If we use either CountVectorizer or TFIDF for our final analyses, then we can recover the words which correspond to each feature, and therefore find the words which contribute the greatest difference between groups. This way, we can indicate which words are used more often when describing specific kinds of beers, and create a lexicographical guide to beer vocabulary.
+Using CountVectorizer or TFIDF for our final analyses, we can recover the words which correspond to each feature, and therefore find the words which contribute the greatest difference between groups. This way, we can indicate which words are used more often when describing specific kinds of beers, and create a lexicographical guide to beer vocabulary.
 
 ### Comparison to The Critics (Optional)
-Time-permitting, we will scrape the aforementioned website and can compare the language used by critics for the most popular beers. Using word counts or tf-idf features, we will be able to see if the most popular unique descriptors for beers are shared by the critics' reviews. This will be a predominantly qualitative analysis.
+
+Time-permitting, we will scrape the aforementioned website and can compare the language used by critics for the most popular beers. Using word counts or tf-idf features, we will be able to see if the most popular unique descriptors for beers are shared by the critics' reviews.
 
 ### Datastory
 
-We present our findings as a static website hosted on `github.io`, including eye-catching explanations of our method, creative visualisations of the differences in language use and conclusions on what language to use if one wishes to be a beer aficianado!
+We present our findings as a static website including explanations of our method and creative visualisation of language use. We will end with describing what language to use for different beers if one wishes to be a beer aficianado!
 
 ## 📆 Proposed Timeline
 
 ##### **Week 10 (20.11-26.11)**
-- Initial analysis of consensus scores and language patterns within smaller beer groups
-- Investigate use of different embedding models in combination with text extraction methods and consesus calculations and investigate findings
-- (time permitting): Conduct webscrape on BeerCritic website and build dataset
+- Conduct initial analysis of consensus scores and language patterns within smaller beer groups
+- Investigate combinations of pre-processing steps, embedding models and consesus calculations
+- (time permitting): Conduct webscrape on BeerCritic website
 
 **Week 11 (27.11-03.12)**
 - Compare language patterns and consensus scores between different groupings of reviews: including exact beers, beer type and reviewer location
-- Seek feedback from TA on methodology and results thus far
-- (time-permitting): Attempt to conduct similar analysis on beer critic reviews and compare consensus scores
+- (time-permitting): Attempt to conduct similar analysis on critics' reviews
 
 **Week 12 (04.12-10.12):**
 - Begin writing up findings and collate our best results into visualisations 
 - Create simple static website using github.io with the skeleton of our data story
 
 **Week 13 (11.12-17.12)**
-- Complete the first draft of the website, including all sections
-- Conduct a thorough review of the project for clarity, coherence, and consistency on the website and in the code
-- Seek feedback from TA colleagues and mentors
+- Complete the first draft of the website
+- Conduct a thorough review of both the code and website
 
 **Week 14: (18.12-22.12)**
-
-- Make revisions from feedback and conduct final checks
+- Conduct final checks
 - Submission of P3 by the deadline
 
 **🔴 Final Deadline**: 22.12.2023 (23:59 CET)
@@ -135,8 +124,8 @@ We present our findings as a static website hosted on `github.io`, including eye
 | Name   | Contributions |
 | ------ | ------------- |
 | Pierre | Embeddor Models, README, Webscrape       |
-| Ludek  | Extraction Models, EDA       |
-| Mika   | Pipeline, Main Notebook      |
+| Ludek  | Extraction Models, EDA     |
+| Mika   | Pipeline, EDA, Main Notebook      |
 | Peter  | Conensus calculation, Data preparation     |
 | Chris  | EDA, Visualisations       |
 
