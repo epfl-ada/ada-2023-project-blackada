@@ -8,11 +8,11 @@ Navigating the world of beer reviews can be a daunting task for non-experts. Bee
 
 Our primary research question is:
 
-> Do beer descriptors in reviews relate to the taste experience of a beer?
+**Do beer descriptors in reviews relate to the taste experience of a beer?**
 
 We will try to answer this question by investigating the following:
 
-> Is there a consensus among reviewers when using specific descriptors for certain beer types and specific beers?
+**Is there a consensus among reviewers when using specific descriptors for certain beer types and specific beers?**
 
 This will naturally lead to many additional interesting sub-questions, such as:
 
@@ -43,7 +43,7 @@ Before embedding the reviews, we implemented different options for pre-processin
 - Lemmatization: Words were lemmatized to reduce inflected words to their base form.
 - Adjective Extraction: We extract only the adjectives from the reviews.
 
-Further details on the methods are discussed in [main.ipynb](main.ipynb) and [playground/extractors.ipynb](`playground/embedders.ipynb`) notebooks.
+Further details on the methods are discussed in [main.ipynb](main.ipynb) and [playground/extractors.ipynb](playground/embedders.ipynb) notebooks.
 
 ### Textual Embeddings
 
@@ -54,7 +54,7 @@ We investigate four different potential text embedding models.
 - BERT: Embeds review using the pre-trained `bert-base-uncased` model. BERT is a bidirectional encoder-only transformer trained to be effective at various NLP tasks.
 - SentenceTransformers: Embeds review using the pre-trained `all-MiniLM-L6-v2` model. The model uses BERT as a backbone, and undergoes further training using Siamese networks.
 
-Further details on the methods are discussed in [main.ipynb](main.ipynb) and [playground/embedders.ipynb](`playground/embedders.ipynb`) notebooks.
+Further details on the methods are discussed in [main.ipynb](main.ipynb) and [playground/embedders.ipynb](playground/embedders.ipynb) notebooks.
 
 ### Consensus Calculation
 
