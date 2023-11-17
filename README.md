@@ -134,12 +134,10 @@ We present our findings as a static website hosted on `github.io`, including eye
 
 | Name   | Contributions |
 | ------ | ------------- |
-| Pierre | *TODO*        |
-| Ludek  | *TODO*        |
-| Mika   | *TODO*        |
-| Peter  | *TODO*        |
-| Chris  | *TODO*        |
+| Pierre | Embeddor Models, README, Webscrape       |
+| Ludek  | Extraction Models, EDA       |
+| Mika   | Pipeline, Main Notebook      |
+| Peter  | Conensus calculation, Data preparation     |
+| Chris  | EDA, Visualisations       |
 
-## 📚 References
-
-*TODO.*
+In addition, all members will contribute their relevant section(s) the final website, as well as help with all other sections where required.
