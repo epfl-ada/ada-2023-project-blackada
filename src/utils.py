@@ -14,6 +14,7 @@ import gzip
 import shutil
 import subprocess
 from tqdm import tqdm
+from numpy.linalg import norm
 
 
 def get_line_count(file_path):
@@ -298,3 +299,17 @@ def _load_metainfo(data_dir: str) -> pd.DataFrame:
     users = users.drop(columns=["joined"])
 
     return beers, breweries, users
+
+
+def cosine_similarity(a, b):
+    """
+    Calculates the cosine similarity between two vectors.
+
+    Args:
+        a (np.ndarray): Vector a.
+        b (np.ndarray): Vector b.
+
+    Returns:
+        float: Cosine similarity between a and b.
+    """
+    return a @ b / (norm(a) * norm(b))
