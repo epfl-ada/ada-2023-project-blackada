@@ -104,54 +104,33 @@ We present our findings as a static website hosted on `github.io`, including eye
 
 ## 📆 Proposed Timeline
 
-```txt
-.
-├── Week 8 (30.10-12.11):
-│   - Setup GitHub
-│   - Automatic data downloading and loading
-│   - Write and analyse modules for extraction of beer descriptors, embedding, and consensus scores
-│   - Tie together modules in `main.ipynb`
-│   - Write `README.md`
-|
-├── Week 9 (13.11-19.11):
-│   - Complete initial analyses for P2
-│   - Complete `README.md` to show project feasability in line with instructions for P2
-├── 17.11.2023: 🔴 P2 Deadline (23:59 CET)
-│
-├── Week 10 (20.11-26.11):
-│   - Conduct initial analysis of consensus scores and language patterns within smaller beer groups.
-|   - Investigate use of different embedding models in combination with text extraction methods and consesus calculations and investigate findings.
-│   - (time-permitting): Conduct webscrape on BeerCritic website and build dataset
-|
-├── Week 11 (27.11-03.12):
-│   - Compare language patterns and consensus scores between different groupings of reviews: including exact beers, beer type and reviewer location
-|   - Seek feedback from TA on methodology and results thus far
-│   - (time-permitting): Attempt to conduct similar analysis on beer critic reviews and compare consensus scores
-|
-├── Week 12 (04.12-10.12):
-│   - Begin writing up findings and collating our best results into visualisations 
-│   - Create simple static website using github.io with the skeleton of our data story
-|
-├── Week 13 (11.12-17.12):
-│   - Complete the first draft of the website, including all sections.
-│   - Conduct a thorough review of the paper for clarity, coherence, and consistency.
-│   - Seek feedback from TA colleagues and mentors.
-|
-├── Week 14: (18.12-22.12):
-│   - Final checks, make revision from feedback
-│   - Submission of P3 by the deadline
-|
-├── 22.12.2023: 🔴 Final Deadline (23:59 CET)
-.
-```
+##### **Week 10 (20.11-26.11)**
+- Initial analysis of consensus scores and language patterns within smaller beer groups
+- Investigate use of different embedding models in combination with text extraction methods and consesus calculations and investigate findings
+- (time permitting): Conduct webscrape on BeerCritic website and build dataset
 
-## 🗿 Internal Milestones
+**Week 11 (27.11-03.12)**
+- Compare language patterns and consensus scores between different groupings of reviews: including exact beers, beer type and reviewer location
+- Seek feedback from TA on methodology and results thus far
+- (time-permitting): Attempt to conduct similar analysis on beer critic reviews and compare consensus scores
 
-```txt
-TODO
-```
+**Week 12 (04.12-10.12):**
+- Begin writing up findings and collate our best results into visualisations 
+- Create simple static website using github.io with the skeleton of our data story
 
-## 👥 Contributions
+**Week 13 (11.12-17.12)**
+- Complete the first draft of the website, including all sections
+- Conduct a thorough review of the project for clarity, coherence, and consistency on the website and in the code
+- Seek feedback from TA colleagues and mentors
+
+**Week 14: (18.12-22.12)**
+
+- Make revisions from feedback and conduct final checks
+- Submission of P3 by the deadline
+
+**🔴 Final Deadline**: 22.12.2023 (23:59 CET)
+
+## 👥 Team Organisation
 
 | Name   | Contributions |
 | ------ | ------------- |
