@@ -329,3 +329,20 @@ def get_word_frequency(text_list):
 
     # Return Sorted word frequency as Pandas DataFrame
     return pd.DataFrame(word_frequency.most_common(), columns=["word", "frequency"])
+
+
+def compute_similarity(model, review1: str, review2: str) -> float:
+    """
+    Computes the similarity between two reviews
+
+    Args:
+        model (embedder.EmbedderBase): Embedder model.
+        review1 (str): First review.
+        review2 (str): Second review.
+
+    Returns:
+        float: Cosine similarity between review1 and review2.
+    """
+    texts = [review1, review2]
+    embeddings = model.transform(texts)
+    return cosine_similarity(embeddings[0], embeddings[1])
