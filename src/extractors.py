@@ -62,6 +62,9 @@ class LemmaExtractor(ExtractorBase):
         """
         return [" ".join([token.lemma_ for token in doc]) for doc in docs]
 
+    @property
+    def name(self) -> str:
+        return "LemmaExtractor"
 
 class AdjectiveExtractor(ExtractorBase):
     """
@@ -86,6 +89,10 @@ class AdjectiveExtractor(ExtractorBase):
             for doc in docs
         ]
 
+    @property
+    def name(self) -> str:
+        return "AdjectiveExtractor"
+
 
 class DummyExtractor(ExtractorBase):
     """
@@ -106,3 +113,7 @@ class DummyExtractor(ExtractorBase):
         List[str]: A list containing the original text of each document.
         """
         return [doc.text for doc in docs]
+
+    @property
+    def name(self) -> str:
+        return "DummyExtractor"
