@@ -22,4 +22,11 @@ Next, we install all dependencies via Poetry:
 poetry install
 ```
 
+In addition, you need to load `spaCy` language models for English. This can be done by running the following commands:
+
+```bash
+poetry shell
+python -m spacy download en_core_web_sm
+```
+
 You can now run the project by using the virtual environment created by Poetry. In VSCode activate the `venv` environment that is created in the `/.venv` in the root directory. You can also use the environment via the command line by running `poetry shell`. Here, you should use the correct Python executable and have all dependencies installed. Exit the environment via `exit`.
