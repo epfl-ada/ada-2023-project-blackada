@@ -6,9 +6,16 @@ Navigating the world of beer reviews can be a daunting task for non-experts. Bee
 
 ## 🔎 Research Questions
 
-**WIP**: Do beer descriptors actually describe the taste of a beer?
+- **Overall**: To what extent do beer descriptors in reviews accurately convey the taste experience of a beer?
+- Is there a consensus among reviewers when using specific descriptors for certain beer types, and does this consensus vary across different beer styles?
+- Are there patterns of language use that are consistent across reviews of the same beer type, suggesting a common vocabulary for describing certain beer characteristics?
+- How does the level of consensus in language use vary between well-established beer types (e.g., IPA, Stout) and more niche or experimental varieties?
+- How does the consensus in language use vary by the country of the reviewer? Can we uncover a difference in vocabulary dependent on the location where the beer is drank?
+- Does the level of consensus in language use increase or decrease over time for specific beer types, indicating potential shifts in consumer preferences or evolving trends in beer flavors?
+- (Optional: time-permitting) Is the language used in beer reviews by the general public drastically different compared to the language used by beer critics? This might suggest that critics are not necessarily very helpful in conveying interpretable reviews of beers.
 
-## Additional Datasets
+
+## 📚 Additional Datasets
 
 Our main project does not require any additional data and will rely solely on the BeerAdvocate dataset. However, we have identified an interesting additional dataset that we might use further down the road, time permitting. The [BeerCritic](http://www.thebeercritic.com/) website contains expert reviews by selected beer critics. We could use these reviews to investigate if there is a similar consensus between 'lay-reviewers' and critics in order to question how useful critics are to the average person.
 
