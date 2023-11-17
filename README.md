@@ -43,7 +43,7 @@ Before embedding the reviews, we implemented different options for pre-processin
 - Lemmatization: Words were lemmatized to reduce inflected words to their base form.
 - Adjective Extraction: We extract only the adjectives from the reviews.
 
-Further details on the methods are discussed in [main.ipynb](main.ipynb) and [playground/extractors.ipynb](playground/embedders.ipynb) notebooks.
+Further details on the methods are discussed in [main.ipynb](main.ipynb) and [playground/extractors.ipynb](playground/extractors.ipynb) notebooks.
 
 ### Textual Embeddings
 
