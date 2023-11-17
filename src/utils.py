@@ -15,6 +15,7 @@ import shutil
 import subprocess
 from tqdm import tqdm
 from numpy.linalg import norm
+from collections import Counter
 
 
 def get_line_count(file_path):
@@ -313,3 +314,18 @@ def cosine_similarity(a, b):
         float: Cosine similarity between a and b.
     """
     return a @ b / (norm(a) * norm(b))
+
+
+def get_word_frequency(text_list):
+    """Calculate word frequency given a list of text documents"""
+    # Combine all the text documents into one large string
+    combined_text = " ".join(text_list)
+
+    # Tokenize the text
+    tokens = combined_text.split()
+
+    # Calculate word frequency using Counter
+    word_frequency = Counter(tokens)
+
+    # Return Sorted word frequency as Pandas DataFrame
+    return pd.DataFrame(word_frequency.most_common(), columns=["word", "frequency"])
