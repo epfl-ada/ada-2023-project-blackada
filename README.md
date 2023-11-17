@@ -6,67 +6,127 @@ Navigating the world of beer reviews can be a daunting task for non-experts. Bee
 
 ## 🔎 Research Questions
 
-**WIP**: Do beer descriptors actually describe the taste of a beer?
+- **Primary**: Do beer descriptors in reviews relate to the taste experience of a beer?
+- Is there a consensus among reviewers when using specific descriptors for certain beer types and specific beers?
+- Are there patterns of language use across reviews of the same beers, suggesting a common vocabulary for describing certain beer characteristics?
+- How does the consensus in language use vary by the country of the reviewe or over time?
+- (Optional) Is the language use drastically different between the beer community and beer critics?
 
-## Additional Datasets
+## 📚 Additional Datasets
 
-Our main project does not require any additional data and will rely entirely on the BeerAdvocate dataset. However, we have identified an interesting additional dataset that we might use further down the road. The [BeerConnoisseur](https://beerconnoisseur.com/) website contains expert reviews of beers. We could use these reviews for a multitude of interesting analyses, e.g. we could compute the consensus scores of experts and reviewers on the BeerAdvocate platform.
+Our main project does not require any additional data and will rely solely on the BeerAdvocate dataset. However, we have identified a potential additional dataset on the [BeerCritic](http://www.thebeercritic.com/) website that might be used, time permitting. The website contains expert reviews by selected beer critics which we can use to question how useful critics are to the average person.
 
 ## 🔮 Methods
 
-*TODO.*
+### EDA 
+
+//TODO: Add EDA we do
+
+We first explore the dataset to investigate the features relevant to the project. We look at the following:
+
+- The length of textual reviews
+- The location of breweries
+- The dsitribution of different beer types
+- 
+### Text Pre-Processing
+
+`//TODO:` @Ludek fill in the relevant options with brief detail
+
+e.g. removal of reviews below a given threshold, lowercasing reviews etc
+
+Prior to embedding, we carry out the following steps to clean the textual reviews: 
+
+- Removal of Stopwords: Common English stopwords were removed to focus on meaningful content.
+
+- Lemmatization: Words were lemmatized to reduce inflected words to their base form.
+
+- Lowercasing: All text was converted to lowercase for consistency.
+
+- Adjective Extraction: Optionally, we can retain only adjectives for embedding if non-adjectives create too much noise
+
+
+### Textual Embeddings
+We investigate 4 different potential text embedding models: 
+- [CountVectorizer](https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html)
+
+The count vectoriser from `sklearn` simply counts the occurences of each word and places the result into a vector - where each entry corresponds to the count of a different word.
+
+- [TFIDFVectorizer](https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html)
+
+The Term Frequency-Inverse Document Frequency (TF-IDF) transformation uses CountVectorization but also considers the importance of terms within individual documents and across the entire dataset.
+
+- BERT ([from HuggingFace](https://huggingface.co/bert-base-uncased))
+
+We use the pre-trained `bert-base-uncased` model. BERT is a bidirectional encoder-only transformer trained to be adaptable on various NLP tasks.
+
+- SentenceTransformers ([from `sentence-transformers`](https://www.sbert.net/docs/pretrained_models.html))
+
+We use the pre-trained `all-MiniLM-L6-v2` model. The `sentence-transformer` models use BERT as a backbone, and conduct further training using [Siamese networks](https://towardsdatascience.com/a-friendly-introduction-to-siamese-networks-85ab17522942).
+
+Further details and potential pros/cons of each model are discussed in `main.ipynb`.
+
+### Consensus Calculation
+
+To quantify the similarity between beer reviews, we use the mean pair-wise cosine similarity within a set of embeddings.
+
+### Analysis 
+
+We can calculate consensus scores for different subsets of the beer reviews and compare. The following variables will be investigated:
+
+- Beer style (IPA, Stout etc)
+- Specific beer
+- Location of review
+- Size of brewery
+- Quantative metrics of the beers (Rating, Overall, Appearance, Aroma, Palate, Taste, ABV)
+- The time of the review 
+
+### Interpretation
+
+A difference in consensus between group and a subgroup of reviews indicates the the language used in the subgroup is more speciic. Given that we group by different categories of beer reviews, this could mean that the language has meaning related to the groups. A simple example might be that, if the word 'clear' is used more often in IPA beer reviews than in the whole dataset, then 'clear' is a meaningful word.
+
+Using CountVectorizer or TFIDF for our final analyses, we can recover the words which correspond to each feature, and therefore find the words which contribute the greatest difference between groups. This way, we can indicate which words are used more often when describing specific kinds of beers, and create a lexicographical guide to beer vocabulary.
+
+### Comparison to The Critics (Optional)
+
+Time-permitting, we will scrape the aforementioned website and can compare the language used by critics for the most popular beers. Using word counts or tf-idf features, we will be able to see if the most popular unique descriptors for beers are shared by the critics' reviews.
+
+### Datastory
+
+We present our findings as a static website including explanations of our method and creative visualisation of language use. We will end with describing what language to use for different beers if one wishes to be a beer aficianado!
 
 ## 📆 Proposed Timeline
 
-```txt
-.
-├── Week 8: (30.10-12.11):
-│   - Setup GitHub
-│   - Automatic data downloading and loading
-│   - Write and analyse modules for extraction of beer descriptors, embedding, and consensus scores
-│   - Tie together modules in `main.ipynb`
-│   - Write `README.md`
-│  
-├── Week 9: (13.11-19.11):
-│   - ([Info about P2](https://epfl-ada.github.io/teaching/fall2023/cs401/projects/))
-│
-├── 17.11.2023: 🔴 P2 Deadline (23:59 CET)
-│
-├── Week 10: (20.11-26.11):
-│   - ...
-│
-├── Week 11: (27.11-03.12):
-│   - ...
-│
-├── Week 12: (04.12-10.12):
-│   - [Consider Adding Ethics Section as Part of the Data Story](https://edstem.org/eu/courses/808/discussion/65545)
-│
-├── Week 13: (11.12-17.12):
-│   - ...
-│
-├── Week 14: (18.12-22.12):
-│   - ...
-│
-├── 22.12.2023: 🔴 Final Deadline (23:59 CET)
-.
-```
+##### **Week 10 (20.11-26.11)**
+- Conduct initial analysis of consensus scores and language patterns within smaller beer groups
+- Investigate combinations of pre-processing steps, embedding models and consesus calculations
+- (time permitting): Conduct webscrape on BeerCritic website
 
-## 🗿 Internal Milestones
+**Week 11 (27.11-03.12)**
+- Compare language patterns and consensus scores between different groupings of reviews: including exact beers, beer type and reviewer location
+- (time-permitting): Attempt to conduct similar analysis on critics' reviews
 
-```txt
-TODO
-```
+**Week 12 (04.12-10.12):**
+- Begin writing up findings and collate our best results into visualisations 
+- Create simple static website using github.io with the skeleton of our data story
 
-## 👥 Contributions
+**Week 13 (11.12-17.12)**
+- Complete the first draft of the website
+- Conduct a thorough review of both the code and website
+
+**Week 14: (18.12-22.12)**
+- Conduct final checks
+- Submission of P3 by the deadline
+
+**🔴 Final Deadline**: 22.12.2023 (23:59 CET)
+
+## 👥 Team Organisation
 
 | Name   | Contributions |
 | ------ | ------------- |
-| Pierre | *TODO*        |
-| Ludek  | *TODO*        |
-| Mika   | *TODO*        |
-| Peter  | *TODO*        |
-| Chris  | *TODO*        |
+| Pierre | Embeddor Models, README, Webscrape       |
+| Ludek  | Extraction Models, EDA     |
+| Mika   | Pipeline, EDA, Main Notebook      |
+| Peter  | Conensus calculation, Data preparation     |
+| Chris  | EDA, Visualisations       |
 
-## 📚 References
-
-*TODO.*
+In addition, all members will contribute their relevant section(s) the final website, as well as help with all other sections where required.
