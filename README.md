@@ -10,7 +10,7 @@ Navigating the world of beer reviews can be a daunting task for non-experts. Bee
 
 ## Additional Datasets
 
-Our main project does not require any additional data and will rely entirely on the BeerAdvocate dataset. However, we have identified an interesting additional dataset that we might use further down the road. The [BeerConnoisseur](https://beerconnoisseur.com/) website contains expert reviews of beers. We could use these reviews for a multitude of interesting analyses, e.g. we could compute the consensus scores of experts and reviewers on the BeerAdvocate platform.
+Our main project does not require any additional data and will rely solely on the BeerAdvocate dataset. However, we have identified an interesting additional dataset that we might use further down the road, time permitting. The [BeerCritic](http://www.thebeercritic.com/) website contains expert reviews by selected beer critics. We could use these reviews to investigate if there is a similar consensus between 'lay-reviewers' and critics in order to question how useful critics are to the average person.
 
 ## 🔮 Methods
 
