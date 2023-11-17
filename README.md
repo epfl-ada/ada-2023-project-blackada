@@ -20,27 +20,20 @@ Our main project does not require any additional data and will rely solely on th
 
 ### EDA 
 
-//TODO: Add EDA we do
+We first explore the dataset to investigate the features relevant to the project, and filter the data in various ways. We will look at the following:
 
-We first explore the dataset to investigate the features relevant to the project. We look at the following:
+- The data we have available
+- The length of textual reviews in words and characters
+- The number of reviews grouped by beer style, breweries and beers
+- Any missing data
 
-- The length of textual reviews
-- The location of breweries
-- The dsitribution of different beer types
-- 
 ### Text Pre-Processing
 
-`//TODO:` @Ludek fill in the relevant options with brief detail
-
-e.g. removal of reviews below a given threshold, lowercasing reviews etc
-
-Prior to embedding, we carry out the following steps to clean the textual reviews: 
+Prior to embedding, we will implemented differnet options for pre-processing the text and see its effect on our analysis. The following are explored: 
 
 - Removal of Stopwords: Common English stopwords were removed to focus on meaningful content.
 
 - Lemmatization: Words were lemmatized to reduce inflected words to their base form.
-
-- Lowercasing: All text was converted to lowercase for consistency.
 
 - Adjective Extraction: Optionally, we can retain only adjectives for embedding if non-adjectives create too much noise
 
@@ -49,21 +42,21 @@ Prior to embedding, we carry out the following steps to clean the textual review
 We investigate 4 different potential text embedding models: 
 - [CountVectorizer](https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html)
 
-The count vectoriser from `sklearn` simply counts the occurences of each word and places the result into a vector - where each entry corresponds to the count of a different word.
+The CountVectorizer simply counts the occurences of each word.
 
 - [TFIDFVectorizer](https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html)
 
 The Term Frequency-Inverse Document Frequency (TF-IDF) transformation uses CountVectorization but also considers the importance of terms within individual documents and across the entire dataset.
 
-- BERT ([from HuggingFace](https://huggingface.co/bert-base-uncased))
+- BERT ([HuggingFace](https://huggingface.co/bert-base-uncased))
 
-We use the pre-trained `bert-base-uncased` model. BERT is a bidirectional encoder-only transformer trained to be adaptable on various NLP tasks.
+We use the pre-trained `bert-base-uncased` model. BERT is a bidirectional encoder-only transformer trained to be effective at various NLP tasks.
 
-- SentenceTransformers ([from `sentence-transformers`](https://www.sbert.net/docs/pretrained_models.html))
+- SentenceTransformers (from [`sentence-transformers`](https://www.sbert.net/docs/pretrained_models.html))
 
-We use the pre-trained `all-MiniLM-L6-v2` model. The `sentence-transformer` models use BERT as a backbone, and conduct further training using [Siamese networks](https://towardsdatascience.com/a-friendly-introduction-to-siamese-networks-85ab17522942).
+We use the pre-trained `all-MiniLM-L6-v2` model. The model uses BERT as a backbone, and undergoes further training using [Siamese networks](https://towardsdatascience.com/a-friendly-introduction-to-siamese-networks-85ab17522942).
 
-Further details and potential pros/cons of each model are discussed in `main.ipynb`.
+Further details are discussed in `main.ipynb`.
 
 ### Consensus Calculation
 
