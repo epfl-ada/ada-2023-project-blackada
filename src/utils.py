@@ -16,6 +16,7 @@ import subprocess
 from tqdm import tqdm
 from numpy.linalg import norm
 from collections import Counter
+import spacy
 
 
 def get_line_count(file_path):
@@ -67,8 +68,9 @@ def load_data(
 ) -> pd.DataFrame:
     """
     Loads the extracted beer data from the specified data directory. It looks for
-    a `reviews.feather` file which contains the merged data frame. If it doesn't exist,
-    it looks for the individual data files, loads them and merges them into a single
+    a `reviews.feather` file which contains the merged data frame including the
+    SpaCy object of reach review. If the file doesn't exist, it looks for the
+    individual data files, loads them and merges them into a single
     DataFrame and saves it as `data.feather` for future reuse.
 
     The num_samples parameter can be used to limit the number of samples loaded.
@@ -87,12 +89,17 @@ def load_data(
         # Load the .feather file
         load_path = os.path.join(data_dir, "reviews.feather")
         reviews = pd.read_feather(load_path)
-        return reviews.head(num_samples)
+        # Shuffle reviews before limiting number of samples
+        if num_samples:
+            reviews.sample(n=num_samples, random_state=seed)
+        return reviews
 
     # Load reviews
+    print("No .feather file found. Loading raw data...")
     reviews = _load_reviews(os.path.join(data_dir, "reviews.txt"))
 
     # Load metainfo for reviews
+    print("Merging reviews with metainfo...")
     beers, breweries, users = _load_metainfo(data_dir)
 
     # Merge reviews with metainfo
@@ -101,9 +108,11 @@ def load_data(
     reviews = reviews.merge(users, on="user_id", how="left")
 
     # Preprocess reviews
+    print("Preprocessing reviews...")
     reviews = _preprocess_reviews(reviews)
 
     # Save to .feather file
+    print("Preprocessing reviews...")
     save_path = os.path.join(data_dir, "reviews.feather")
     reviews.to_feather(save_path)
 
@@ -192,6 +201,7 @@ def _preprocess_reviews(reviews: pd.DataFrame) -> pd.DataFrame:
     - Sorts columns
     - Converts columns into multi-index columns
     - Drops any reviews with missing values
+    - Adds the SpaCy `Doc` objects to the DataFrame in column ("review", "doc")
 
     Args:
         df (pd.DataFrame): `reviews` DataFrame containing reviews.
@@ -252,6 +262,13 @@ def _preprocess_reviews(reviews: pd.DataFrame) -> pd.DataFrame:
 
     # Drop any reviews (rows) with missing values
     reviews = reviews.dropna()
+
+    # Add SpaCy Doc objects to DataFrame
+    nlp = spacy.load("en_core_web_sm")
+    review_docs = []
+    for review in tqdm(reviews.review.text.tolist(), desc="Adding SpaCy docs"):
+        review_docs.append(nlp(review))
+    reviews[("review", "docs")] = review_docs
 
     return reviews
 
