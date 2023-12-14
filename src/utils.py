@@ -6,17 +6,20 @@ Included functions:
 - load_data(): Loads the extracted beer data from the specified data directory
 """
 
-import os
-import tarfile
-import gdown
-import pandas as pd
 import gzip
+import os
 import shutil
 import subprocess
-from tqdm import tqdm
-from numpy.linalg import norm
+import tarfile
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
+from typing import Callable, Iterable
+
+import gdown
+import pandas as pd
 import spacy
+from numpy.linalg import norm
+from tqdm import tqdm
 
 
 def get_line_count(file_path):
@@ -263,14 +266,32 @@ def _preprocess_reviews(reviews: pd.DataFrame) -> pd.DataFrame:
     # Drop any reviews (rows) with missing values
     reviews = reviews.dropna()
 
-    # Add SpaCy Doc objects to DataFrame
+    # Load SpaCy model and raw review texts
     nlp = spacy.load("en_core_web_sm")
-    review_docs = []
-    for review in tqdm(reviews.review.text.tolist(), desc="Adding SpaCy docs"):
-        review_docs.append(nlp(review))
+    review_texts = reviews.review.text.tolist()
+
+    # Compute SpaCy Doc objects in parallel
+    review_docs = _parallel_map_with_progress(nlp, review_texts)
+
+    # Add SpaCy Doc objects to DataFrame
     reviews[("review", "docs")] = review_docs
 
     return reviews
+
+
+def _parallel_map_with_progress(func: Callable, iterable: Iterable) -> list:
+    """
+    Maps a function to an iterable in parallel and displays a progress bar.
+
+    Args:
+        func (Callable): Function to map to iterable.
+        iterable (Iterable): Iterable to map function to.
+
+    Returns:
+        list: List of results from mapping function to iterable.
+    """
+    with ThreadPoolExecutor() as executor:
+        return list(tqdm(executor.map(func, iterable), total=len(iterable)))
 
 
 def _load_metainfo(data_dir: str) -> pd.DataFrame:
