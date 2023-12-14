@@ -21,6 +21,8 @@ import spacy
 from numpy.linalg import norm
 from tqdm import tqdm
 
+nlp = spacy.load("en_core_web_sm")
+
 
 def get_line_count(file_path):
     """Quick way of obtaining the number of lines in a (large) file.
@@ -88,18 +90,25 @@ def load_data(
         pd.DataFrame: DataFrame containing relevant beer data.
     """
     # Look for a .feather file containing the merged data
-    if os.path.isfile(os.path.join(data_dir, "reviews.feather")):
+    reviews_feather_path = os.path.join(data_dir, "reviews.feather")
+    if os.path.isfile(reviews_feather_path):
         # Load the .feather file
-        load_path = os.path.join(data_dir, "reviews.feather")
-        reviews = pd.read_feather(load_path)
-        # Shuffle reviews before limiting number of samples
+        reviews = pd.read_feather(reviews_feather_path)
+
+        # Deserialize SpaCy Doc objects
+        reviews[("review", "doc")] = reviews.review.doc.apply(
+            lambda x: spacy.tokens.Doc(nlp.vocab).from_bytes(x)
+        )
+
+        # Limit number of samples if specified
         if num_samples:
-            reviews.sample(n=num_samples, random_state=seed)
+            return reviews.sample(n=num_samples, random_state=seed)
+
         return reviews
 
     # Load reviews
     print("No .feather file found. Loading raw data...")
-    reviews = _load_reviews(os.path.join(data_dir, "reviews.txt"))
+    reviews = _load_reviews(data_dir)
 
     # Load metainfo for reviews
     print("Merging reviews with metainfo...")
@@ -114,25 +123,33 @@ def load_data(
     print("Preprocessing reviews...")
     reviews = _preprocess_reviews(reviews)
 
+    # Serialize SpaCy Doc objects before saving
+    reviews[("review", "doc")] = reviews.review.doc.apply(
+        lambda doc: doc.to_bytes(),
+    )
+
     # Save to .feather file
-    print("Preprocessing reviews...")
-    save_path = os.path.join(data_dir, "reviews.feather")
-    reviews.to_feather(save_path)
+    reviews.to_feather(reviews_feather_path)
+
+    # Convert Spacy Doc objects back to Doc objects
+    reviews[("review", "doc")] = reviews.review.doc.apply(
+        lambda doc: spacy.tokens.Doc(nlp.vocab).from_bytes(doc)
+    )
 
     # Limit number of samples if specified
     if num_samples:
         # Shuffle reviews before limiting number of samples
-        reviews.sample(n=num_samples, random_state=seed)
+        reviews = reviews.sample(n=num_samples, random_state=seed)
 
     return reviews
 
 
-def _load_reviews(file_path: str) -> pd.DataFrame:
+def _load_reviews(data_dir: str) -> pd.DataFrame:
     """
-    Loads the reviews from a `.txt` file at a specified path.
+    Loads the reviews from a `reviews.txt` file in a specified directory.
 
     Args:
-        file_path (str): Path of `.txt` file containing reviews.
+        data_dir (str): Directory containing raw reviews
 
     Returns:
         pd.DataFrame: DataFrame containing reviews.
@@ -144,6 +161,7 @@ def _load_reviews(file_path: str) -> pd.DataFrame:
     """
     beer_data = []
     current_beer = {}
+    file_path = os.path.join(data_dir, "reviews.txt")
     total_count = get_line_count(file_path)
 
     with open(file_path, "r") as file:
@@ -267,14 +285,13 @@ def _preprocess_reviews(reviews: pd.DataFrame) -> pd.DataFrame:
     reviews = reviews.dropna()
 
     # Load SpaCy model and raw review texts
-    nlp = spacy.load("en_core_web_sm")
     review_texts = reviews.review.text.tolist()
 
     # Compute SpaCy Doc objects in parallel
     review_docs = _parallel_map_with_progress(nlp, review_texts)
 
     # Add SpaCy Doc objects to DataFrame
-    reviews[("review", "docs")] = review_docs
+    reviews[("review", "doc")] = review_docs
 
     return reviews
 
