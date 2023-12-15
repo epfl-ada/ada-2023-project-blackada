@@ -1,14 +1,16 @@
-import src.utils as utils
+import argparse
 import os
+
 import spacy
 from spacy.tokens import DocBin
-import argparse
+
+import src.utils as utils
 
 # Globals
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(ROOT_DIR, "data")
 PROCESSED_DIR = os.path.join(DATA_DIR, "processed")
-NLP = spacy.load("en_core_web_sm")
+NLP = spacy.load("en_core_web_sm", disable=["ner", "parser"])
 DOC_BIN = DocBin(attrs=["LEMMA", "POS"])
 
 

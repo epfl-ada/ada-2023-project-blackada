@@ -17,9 +17,9 @@ import gdown
 import numpy as np
 import pandas as pd
 import spacy
+from numpy.linalg import norm
 from spacy.language import Language
 from spacy.tokens import DocBin
-from numpy.linalg import norm
 from tqdm import tqdm
 
 
@@ -121,16 +121,15 @@ def process_data(
         None
     """
     # Check that raw data exists
-    assert raw_data_exists(
-        data_dir, num_samples
-    ), "Raw data does not exist. Call `download_data()` first."
+    msg = "Raw data does not exist. Call `download_data()` first."
+    assert raw_data_exists(data_dir), msg
 
     # Adjust processed directory if num_samples is specified
     if num_samples:
         processed_dir = os.path.join(processed_dir, str(num_samples))
 
     # Create processed directory if it does not exist
-    os.makedirs(process_data, exist_ok=True)
+    os.makedirs(processed_dir, exist_ok=True)
 
     # Load raw reviews
     reviews = _load_reviews(data_dir)
