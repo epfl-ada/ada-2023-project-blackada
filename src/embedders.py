@@ -108,6 +108,17 @@ class TfidfEmbedder(EmbedderBase):
             Array of Tfidf embeddings.
         """
         return self.transformer.fit_transform(reviews).toarray()
+
+    def get_feature_names(self) -> list[str]:
+        """
+        Get the ordered feature names of the Tfidf vectorizer.
+
+        Returns
+        -------
+        list[str]
+            List of feature names.
+        """
+        return self.transformer.get_feature_names_out()
     
 
 class BertEmbedder(EmbedderBase):
