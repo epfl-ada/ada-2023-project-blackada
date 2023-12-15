@@ -12,30 +12,15 @@ import shutil
 import subprocess
 import tarfile
 from collections import Counter
-from concurrent.futures import ThreadPoolExecutor
-from typing import Callable, Iterable
 
 import gdown
+import numpy as np
 import pandas as pd
 import spacy
+from spacy.language import Language
+from spacy.tokens import DocBin
 from numpy.linalg import norm
 from tqdm import tqdm
-
-nlp = spacy.load("en_core_web_sm")
-
-
-def get_line_count(file_path):
-    """Quick way of obtaining the number of lines in a (large) file.
-
-    Args:
-        file_path (str): Path to file.
-
-    Returns:
-        line_count (int): Number of lines in file.
-    """
-    result = subprocess.run(["wc", "-l", file_path], stdout=subprocess.PIPE, text=True)
-    line_count = int(result.stdout.strip().split()[0])
-    return line_count
 
 
 def download_data(url: str, data_dir: str) -> None:
@@ -68,85 +53,166 @@ def download_data(url: str, data_dir: str) -> None:
     os.remove(os.path.join(data_dir, "reviews.txt.gz"))
 
 
-def load_data(
-    data_dir: str, num_samples: int | None = None, seed: int = 42
-) -> pd.DataFrame:
+def raw_data_exists(data_dir: str) -> bool:
     """
-    Loads the extracted beer data from the specified data directory. It looks for
-    a `reviews.feather` file which contains the merged data frame including the
-    SpaCy object of reach review. If the file doesn't exist, it looks for the
-    individual data files, loads them and merges them into a single
-    DataFrame and saves it as `data.feather` for future reuse.
-
-    The num_samples parameter can be used to limit the number of samples loaded.
-    However, on first load, all samples are always loaded and saved to a .feather file.
+    Check if the raw data exists in the specified data directory.
 
     Args:
-        data_dir (str): Path of directory containing extracted data.
-        num_samples (int, optional): Number of samples to load.
-            Defaults to loading all samples. (None)
+        data_dir (str): Path of directory containing raw data.
 
     Returns:
-        pd.DataFrame: DataFrame containing relevant beer data.
+        bool: True if raw data exists, else False.
     """
-    # Look for a .feather file containing the merged data
-    reviews_feather_path = os.path.join(data_dir, "reviews.feather")
-    if os.path.isfile(reviews_feather_path):
-        # Load the .feather file
-        reviews = pd.read_feather(reviews_feather_path)
+    files = ["reviews.txt", "beers.csv", "breweries.csv", "users.csv"]
+    has_path = os.path.isdir(data_dir)
+    has_files = all([os.path.isfile(os.path.join(data_dir, file)) for file in files])
 
-        # Deserialize SpaCy Doc objects
-        reviews[("review", "doc")] = reviews.review.doc.apply(
-            lambda x: spacy.tokens.Doc(nlp.vocab).from_bytes(x)
-        )
+    return has_path and has_files
 
-        # Limit number of samples if specified
-        if num_samples:
-            return reviews.sample(n=num_samples, random_state=seed)
 
-        return reviews
+def processed_data_exists(processed_dir: str, num_samples: int | None = None) -> bool:
+    """
+    Check if the processed data exists in the specified data directory.
 
-    # Load reviews
-    print("No .feather file found. Loading raw data...")
+    Args:
+        processed_dir (str): Path of directory containing raw data.
+
+    Returns:
+        bool: True if processed data exists, else False.
+    """
+    files = ["reviews.feather", "docs.spacy"]
+    if num_samples:
+        processed_dir = os.path.join(processed_dir, str(num_samples))
+
+    has_path = os.path.isdir(processed_dir)
+    has_files = all(
+        [os.path.isfile(os.path.join(processed_dir, file)) for file in files]
+    )
+
+    return has_path and has_files
+
+
+def process_data(
+    data_dir: str,
+    processed_dir: str,
+    nlp: Language,
+    doc_bin: DocBin,
+    num_samples: int | None = None,
+) -> None:
+    """
+    Processes the raw data in the specified data directory. It loads the raw
+    reviews and metainfo, merges them, preprocesses them, extracts SpaCy docs
+    and saves the processed data as a feather file into the preprocessed
+    folder. If number of samples is specified, it only processes a subset
+    of the data and saves it into a folder `{preprocessed_dir}/{num_samples}/`
+
+    Uses a SpaCy pipeline to process the reviews defined by the `nlp` object
+    and saves the SpaCy docs into a `docs.spacy` file using a the `doc_bin`
+    object.
+
+    Args:
+        data_dir (str): Path of directory containing raw data.
+        processed_dir (str): Path of directory to store processed data.
+        nlp (Language): SpaCy language model.
+        doc_bin (DocBin): SpaCy DocBin.
+        num_samples (int, optional): Subset of data to process. Defaults to processing all samples. (None)
+
+    Returns:
+        None
+    """
+    # Check that raw data exists
+    assert raw_data_exists(
+        data_dir, num_samples
+    ), "Raw data does not exist. Call `download_data()` first."
+
+    # Adjust processed directory if num_samples is specified
+    if num_samples:
+        processed_dir = os.path.join(processed_dir, str(num_samples))
+
+    # Create processed directory if it does not exist
+    os.makedirs(process_data, exist_ok=True)
+
+    # Load raw reviews
     reviews = _load_reviews(data_dir)
 
     # Load metainfo for reviews
-    print("Merging reviews with metainfo...")
+    print("Loading metadata...")
     beers, breweries, users = _load_metainfo(data_dir)
 
-    # Merge reviews with metainfo
+    # Merging reviews with metainfo
+    print("Merging reviews...")
     reviews = reviews.merge(beers, on="beer_id", how="left")
     reviews = reviews.merge(breweries, on="brewery_id", how="left")
     reviews = reviews.merge(users, on="user_id", how="left")
 
-    # Preprocess reviews
+    # Process reviews
     print("Preprocessing reviews...")
     reviews = _preprocess_reviews(reviews)
 
-    # Serialize SpaCy Doc objects before saving
-    reviews[("review", "doc")] = reviews.review.doc.apply(
-        lambda doc: doc.to_bytes(),
-    )
-
-    # Save to .feather file
-    reviews.to_feather(reviews_feather_path)
-
-    # Convert Spacy Doc objects back to Doc objects
-    reviews[("review", "doc")] = reviews.review.doc.apply(
-        lambda doc: spacy.tokens.Doc(nlp.vocab).from_bytes(doc)
-    )
-
-    # Limit number of samples if specified
+    # Limit number of reviews if specified
     if num_samples:
-        # Shuffle reviews before limiting number of samples
-        reviews = reviews.sample(n=num_samples, random_state=seed)
+        reviews = reviews.iloc[:num_samples]
+
+    # Save processed reviews as feather
+    reviews.to_feather(os.path.join(processed_dir, "reviews.feather"))
+
+    # Extract SpaCy docs with relevant information
+    review_texts = reviews.review.text.tolist()
+    for doc in tqdm(
+        nlp.pipe(review_texts), total=len(review_texts), desc="Processing Spacy docs"
+    ):
+        doc_bin.add(doc)
+
+    # Save processed reviews as Spacy DocBin
+    doc_bin.to_disk(os.path.join(processed_dir, "docs.spacy"))
+
+
+def load_data(
+    processed_dir: str,
+    nlp: Language,
+    num_samples: int | None = None,
+) -> pd.DataFrame:
+    """
+    Loads the extracted beer data from the specified data directory. It looks for
+    a `reviews.feather` and `docs.spacy` file containing the extracted SpaCy object.
+    If a limit is specified, it looks in the folder `data_dir/{limit}` for the
+    same files which contain a subset of the data.
+
+    Args:
+        processed_dir (str): Path of directory containing extracted data.
+        num_samples (int, optional): Subset of data to load. Defaults to loading all samples. (None)
+
+    Returns:
+        pd.DataFrame: DataFrame containing relevant beer review data and SpaCy docs.
+    """
+    # Check that processed data exists
+    assert processed_data_exists(
+        processed_dir, num_samples
+    ), "Processed data does not exist. Call `process_data()` first."
+
+    # Adjust processed directory if num_samples is specified
+    if num_samples:
+        processed_dir = os.path.join(processed_dir, str(num_samples))
+
+    # Load reviews from feather file
+    reviews_path = os.path.join(processed_dir, "reviews.feather")
+    reviews = pd.read_feather(reviews_path)
+
+    # Laod SpaCy docs from spacy file
+    docs_path = os.path.join(processed_dir, "docs.spacy")
+    docs = DocBin().from_disk(docs_path).get_docs(nlp.vocab)
+
+    # Add SpaCy docs to reviews DataFrame
+    reviews[("review", "doc")] = list(docs)
 
     return reviews
 
 
 def _load_reviews(data_dir: str) -> pd.DataFrame:
     """
-    Loads the reviews from a `reviews.txt` file in a specified directory.
+    Loads the reviews from a `reviews.feather` is it exists. Else,
+    it loads the raw reviews from `reviews.txt` and saves the
+    processed reviews as a `reviews.feather` file.
 
     Args:
         data_dir (str): Directory containing raw reviews
@@ -159,13 +225,19 @@ def _load_reviews(data_dir: str) -> pd.DataFrame:
     However, values of type str are casted to object type since
     string can have different lengths.
     """
+    feather_reviews_path = os.path.join(data_dir, "reviews.feather")
+    if os.path.isfile(feather_reviews_path):
+        print("Loading raw reviews from feather...")
+        return pd.read_feather(feather_reviews_path)
+
     beer_data = []
     current_beer = {}
     file_path = os.path.join(data_dir, "reviews.txt")
-    total_count = get_line_count(file_path)
+    result = subprocess.run(["wc", "-l", file_path], stdout=subprocess.PIPE, text=True)
+    line_count = int(result.stdout.strip().split()[0])
 
     with open(file_path, "r") as file:
-        for line in tqdm(file, total=total_count, desc="Loading raw reviews"):
+        for line in tqdm(file, total=line_count, desc="Loading raw reviews"):
             line = line.strip()
             if not line or ": " not in line:
                 if current_beer:
@@ -198,22 +270,58 @@ def _load_reviews(data_dir: str) -> pd.DataFrame:
         if current_beer:
             beer_data.append(current_beer)
 
-    return pd.DataFrame(beer_data)
+    reviews = pd.DataFrame(beer_data)
+
+    # Save reviews as feather file
+    reviews.to_feather(feather_reviews_path)
+
+    return reviews
 
 
-def _extract_gz(file_path: str) -> None:
+def _load_metainfo(data_dir: str) -> pd.DataFrame:
     """
-    Extracts a .gz file into the same directory and removes the .gz file.
+    Loads the metainfo from the data directory. And performs basic preprocessing:
+    - Selects relevant columns
+    - Renames columns so that they can be merged with the reviews DataFrame
+    - Converts timestamps to datetime
 
     Args:
-        file_path (str): Path of .gz file to extract.
+        data_dir (str): Path of directory containing extracted data.
 
     Returns:
-        None
+        beers (pd.DataFrame): DataFrame containing beer metainfo.
+        breweries (pd.DataFrame): DataFrame containing brewery metainfo.
+        users (pd.DataFrame): DataFrame containing user metainfo.
     """
-    with gzip.open(file_path, "rb") as f_in:
-        with open(file_path[:-3], "wb") as f_out:
-            shutil.copyfileobj(f_in, f_out)
+
+    # Load the raw data
+    beers = pd.read_csv(os.path.join(data_dir, "beers.csv"))
+    breweries = pd.read_csv(os.path.join(data_dir, "breweries.csv"))
+    users = pd.read_csv(os.path.join(data_dir, "users.csv"))
+
+    # Define relevant columns
+    beers = beers[["beer_id", "nbr_ratings", "nbr_reviews"]].rename(
+        {"nbr_ratings": "beer_nbr_ratings", "nbr_reviews": "beer_nbr_reviews"}, axis=1
+    )
+    breweries = breweries[["id", "location", "nbr_beers"]].rename(
+        {"id": "brewery_id", "location": "brewery_location"}, axis=1
+    )
+    users = users[
+        ["nbr_ratings", "nbr_reviews", "user_id", "joined", "location"]
+    ].rename(
+        {
+            "nbr_ratings": "user_nbr_ratings",
+            "nbr_reviews": "user_nbr_reviews",
+            "location": "user_location",
+        },
+        axis=1,
+    )
+
+    # Convert timestamps to datetime
+    users["user_joined"] = pd.to_datetime(users["joined"], unit="s")
+    users = users.drop(columns=["joined"])
+
+    return beers, breweries, users
 
 
 def _preprocess_reviews(reviews: pd.DataFrame) -> pd.DataFrame:
@@ -222,7 +330,7 @@ def _preprocess_reviews(reviews: pd.DataFrame) -> pd.DataFrame:
     - Sorts columns
     - Converts columns into multi-index columns
     - Drops any reviews with missing values
-    - Adds the SpaCy `Doc` objects to the DataFrame in column ("review", "doc")
+    - Resets the index
 
     Args:
         df (pd.DataFrame): `reviews` DataFrame containing reviews.
@@ -284,77 +392,25 @@ def _preprocess_reviews(reviews: pd.DataFrame) -> pd.DataFrame:
     # Drop any reviews (rows) with missing values
     reviews = reviews.dropna()
 
-    # Load SpaCy model and raw review texts
-    review_texts = reviews.review.text.tolist()
-
-    # Compute SpaCy Doc objects in parallel
-    review_docs = _parallel_map_with_progress(nlp, review_texts)
-
-    # Add SpaCy Doc objects to DataFrame
-    reviews[("review", "doc")] = review_docs
+    # Reset index
+    reviews = reviews.reset_index()
 
     return reviews
 
 
-def _parallel_map_with_progress(func: Callable, iterable: Iterable) -> list:
+def _extract_gz(file_path: str) -> None:
     """
-    Maps a function to an iterable in parallel and displays a progress bar.
+    Extracts a .gz file into the same directory and removes the .gz file.
 
     Args:
-        func (Callable): Function to map to iterable.
-        iterable (Iterable): Iterable to map function to.
+        file_path (str): Path of .gz file to extract.
 
     Returns:
-        list: List of results from mapping function to iterable.
+        None
     """
-    with ThreadPoolExecutor() as executor:
-        return list(tqdm(executor.map(func, iterable), total=len(iterable)))
-
-
-def _load_metainfo(data_dir: str) -> pd.DataFrame:
-    """
-    Loads the metainfo from the data directory. And performs basic preprocessing:
-    - Selects relevant columns
-    - Renames columns so that they can be merged with the reviews DataFrame
-    - Converts timestamps to datetime
-
-    Args:
-        data_dir (str): Path of directory containing extracted data.
-
-    Returns:
-        beers (pd.DataFrame): DataFrame containing beer metainfo.
-        breweries (pd.DataFrame): DataFrame containing brewery metainfo.
-        users (pd.DataFrame): DataFrame containing user metainfo.
-    """
-
-    # Load the raw data
-    beers = pd.read_csv(os.path.join(data_dir, "beers.csv"))
-    breweries = pd.read_csv(os.path.join(data_dir, "breweries.csv"))
-    users = pd.read_csv(os.path.join(data_dir, "users.csv"))
-
-    # Define relevant columns
-    beers = beers[["beer_id", "nbr_ratings", "nbr_reviews"]].rename(
-        {"nbr_ratings": "beer_nbr_ratings", "nbr_reviews": "beer_nbr_reviews"}, axis=1
-    )
-    breweries = breweries[["id", "location", "nbr_beers"]].rename(
-        {"id": "brewery_id", "location": "brewery_location"}, axis=1
-    )
-    users = users[
-        ["nbr_ratings", "nbr_reviews", "user_id", "joined", "location"]
-    ].rename(
-        {
-            "nbr_ratings": "user_nbr_ratings",
-            "nbr_reviews": "user_nbr_reviews",
-            "location": "user_location",
-        },
-        axis=1,
-    )
-
-    # Convert timestamps to datetime
-    users["user_joined"] = pd.to_datetime(users["joined"], unit="s")
-    users = users.drop(columns=["joined"])
-
-    return beers, breweries, users
+    with gzip.open(file_path, "rb") as f_in:
+        with open(file_path[:-3], "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
 
 
 def cosine_similarity(a, b):
