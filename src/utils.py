@@ -6,12 +6,13 @@ Included functions:
 - load_data(): Loads the extracted beer data from the specified data directory
 """
 
+import json
 import gzip
 import os
 import shutil
 import subprocess
 import tarfile
-from collections import Counter
+from collections import Counter, defaultdict
 
 import gdown
 import numpy as np
@@ -136,13 +137,23 @@ def process_data(
 
     # Load metainfo for reviews
     print("Loading metadata...")
-    beers, breweries, users = _load_metainfo(data_dir)
+    beers, breweries, users, taxonomy = _load_metainfo(data_dir)
 
     # Merging reviews with metainfo
     print("Merging reviews...")
     reviews = reviews.merge(beers, on="beer_id", how="left")
     reviews = reviews.merge(breweries, on="brewery_id", how="left")
     reviews = reviews.merge(users, on="user_id", how="left")
+
+    # Add substyle to reviews
+    substyle2style = defaultdict(lambda: "Other")
+    for style in taxonomy.keys():
+        for substyle in taxonomy[style]:
+            substyle2style[substyle] = style
+
+    # Add style to reviews
+    reviews["substyle"] = reviews["style"]
+    reviews["style"] = reviews["substyle"].map(substyle2style)
 
     # Process reviews
     print("Preprocessing reviews...")
@@ -297,6 +308,8 @@ def _load_metainfo(data_dir: str) -> pd.DataFrame:
     beers = pd.read_csv(os.path.join(data_dir, "beers.csv"))
     breweries = pd.read_csv(os.path.join(data_dir, "breweries.csv"))
     users = pd.read_csv(os.path.join(data_dir, "users.csv"))
+    with open(os.path.join(data_dir, "taxonomy.json")) as f:
+        taxonomy = json.load(f)
 
     # Define relevant columns
     beers = beers[["beer_id", "nbr_ratings", "nbr_reviews"]].rename(
@@ -320,7 +333,7 @@ def _load_metainfo(data_dir: str) -> pd.DataFrame:
     users["user_joined"] = pd.to_datetime(users["joined"], unit="s")
     users = users.drop(columns=["joined"])
 
-    return beers, breweries, users
+    return beers, breweries, users, taxonomy
 
 
 def _preprocess_reviews(reviews: pd.DataFrame) -> pd.DataFrame:
@@ -342,6 +355,7 @@ def _preprocess_reviews(reviews: pd.DataFrame) -> pd.DataFrame:
         "beer_id",
         "beer_name",
         "style",
+        "substyle",
         "abv",
         "beer_nbr_ratings",
         "beer_nbr_reviews",
@@ -365,7 +379,15 @@ def _preprocess_reviews(reviews: pd.DataFrame) -> pd.DataFrame:
         "date",
     ]
     multi_columns = {
-        "beer": ["id", "name", "style", "abv", "nbr_ratings", "nbr_reviews"],
+        "beer": [
+            "id",
+            "name",
+            "style",
+            "substyle",
+            "abv",
+            "nbr_ratings",
+            "nbr_reviews",
+        ],
         "brewery": ["id", "name", "location", "nbr_beers"],
         "user": ["id", "name", "nbr_ratings", "nbr_reviews", "joined", "location"],
         "review": [
