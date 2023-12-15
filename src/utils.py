@@ -23,6 +23,145 @@ from spacy.language import Language
 from spacy.tokens import DocBin
 from tqdm import tqdm
 
+# Constants
+taxonomy = {
+    "Pale Lagers and Pilsners": [
+        "Euro Pale Lager",
+        "Munich Helles Lager",
+        "German Pilsener",
+        "Czech Pilsener",
+        "Light Lager",
+        "Vienna Lager",
+    ],
+    "Amber and Dark Lagers": [
+        "Märzen / Oktoberfest",
+        "Schwarzbier",
+        "Dunkelweizen",
+        "Doppelbock",
+    ],
+    "Pale Ales": [
+        "English Pale Ale",
+        "American Pale Ale (APA)",
+        "American Blonde Ale",
+        "Kölsch",
+    ],
+    "India Pale Ales (IPAs)": [
+        "English India Pale Ale (IPA)",
+        "American IPA",
+        "American Double / Imperial IPA",
+        "Belgian IPA",
+    ],
+    "Stouts and Porters": [
+        "American Stout",
+        "Milk / Sweet Stout",
+        "Irish Dry Stout",
+        "English Stout",
+        "Oatmeal Stout",
+        "American Porter",
+        "Baltic Porter",
+        "Foreign / Export Stout",
+        "American Double / Imperial Stout",
+        "Russian Imperial Stout",
+    ],
+    "Bitters and English Ales": [
+        "English Bitter",
+        "Irish Red Ale",
+        "English Brown Ale",
+        "English Porter",
+        "English Dark Mild Ale",
+        "English Pale Mild Ale",
+        "Extra Special / Strong Bitter (ESB)",
+        "English Strong Ale",
+        "Old Ale",
+    ],
+    "Wheat Beers": [
+        "American Pale Wheat Ale",
+        "Hefeweizen",
+        "Witbier",
+        "Kristalweizen",
+    ],
+    "Belgian and French Ales": [
+        "Saison / Farmhouse Ale",
+        "Belgian Strong Pale Ale",
+        "Tripel",
+        "Quadrupel (Quad)",
+        "Dubbel",
+        "Belgian Pale Ale",
+    ],
+    "Specialty Beers": [
+        "Fruit / Vegetable Beer",
+        "Herbed / Spiced Beer",
+        "Chile Beer",
+        "Gose",
+        "Rauchbier",
+        "Smoked Beer",
+        "Rye Beer",
+        "Scottish Gruit / Ancient Herbed Ale",
+        "Sahti",
+    ],
+    "Hybrid and Experimental Beers": [
+        "California Common / Steam Beer",
+        "American Black Ale",
+        "American Wild Ale",
+        "Winter Warmer",
+        "Altbier",
+        "Scottish Ale",
+        "Black & Tan",
+    ],
+}
+
+columns = [
+    "beer_id",
+    "beer_name",
+    "style",
+    "substyle",
+    "abv",
+    "beer_nbr_ratings",
+    "beer_nbr_reviews",
+    "brewery_id",
+    "brewery_name",
+    "brewery_location",
+    "nbr_beers",
+    "user_id",
+    "user_name",
+    "user_nbr_ratings",
+    "user_nbr_reviews",
+    "user_joined",
+    "user_location",
+    "appearance",
+    "aroma",
+    "palate",
+    "taste",
+    "overall",
+    "rating",
+    "text",
+    "date",
+]
+
+multi_columns = {
+    "beer": [
+        "id",
+        "name",
+        "style",
+        "substyle",
+        "abv",
+        "nbr_ratings",
+        "nbr_reviews",
+    ],
+    "brewery": ["id", "name", "location", "nbr_beers"],
+    "user": ["id", "name", "nbr_ratings", "nbr_reviews", "joined", "location"],
+    "review": [
+        "appearance",
+        "aroma",
+        "palate",
+        "taste",
+        "overall",
+        "rating",
+        "text",
+        "date",
+    ],
+}
+
 
 def download_data(url: str, data_dir: str) -> None:
     """
@@ -137,7 +276,7 @@ def process_data(
 
     # Load metainfo for reviews
     print("Loading metadata...")
-    beers, breweries, users, taxonomy = _load_metainfo(data_dir)
+    beers, breweries, users = _load_metainfo(data_dir)
 
     # Merging reviews with metainfo
     print("Merging reviews...")
@@ -308,8 +447,6 @@ def _load_metainfo(data_dir: str) -> pd.DataFrame:
     beers = pd.read_csv(os.path.join(data_dir, "beers.csv"))
     breweries = pd.read_csv(os.path.join(data_dir, "breweries.csv"))
     users = pd.read_csv(os.path.join(data_dir, "users.csv"))
-    with open(os.path.join(data_dir, "taxonomy.json")) as f:
-        taxonomy = json.load(f)
 
     # Define relevant columns
     beers = beers[["beer_id", "nbr_ratings", "nbr_reviews"]].rename(
@@ -333,7 +470,7 @@ def _load_metainfo(data_dir: str) -> pd.DataFrame:
     users["user_joined"] = pd.to_datetime(users["joined"], unit="s")
     users = users.drop(columns=["joined"])
 
-    return beers, breweries, users, taxonomy
+    return beers, breweries, users
 
 
 def _preprocess_reviews(reviews: pd.DataFrame) -> pd.DataFrame:
@@ -351,56 +488,6 @@ def _preprocess_reviews(reviews: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: Preprocessed `reviews` DataFrame.
     """
     # Sorted columns and multi-index columns
-    columns = [
-        "beer_id",
-        "beer_name",
-        "style",
-        "substyle",
-        "abv",
-        "beer_nbr_ratings",
-        "beer_nbr_reviews",
-        "brewery_id",
-        "brewery_name",
-        "brewery_location",
-        "nbr_beers",
-        "user_id",
-        "user_name",
-        "user_nbr_ratings",
-        "user_nbr_reviews",
-        "user_joined",
-        "user_location",
-        "appearance",
-        "aroma",
-        "palate",
-        "taste",
-        "overall",
-        "rating",
-        "text",
-        "date",
-    ]
-    multi_columns = {
-        "beer": [
-            "id",
-            "name",
-            "style",
-            "substyle",
-            "abv",
-            "nbr_ratings",
-            "nbr_reviews",
-        ],
-        "brewery": ["id", "name", "location", "nbr_beers"],
-        "user": ["id", "name", "nbr_ratings", "nbr_reviews", "joined", "location"],
-        "review": [
-            "appearance",
-            "aroma",
-            "palate",
-            "taste",
-            "overall",
-            "rating",
-            "text",
-            "date",
-        ],
-    }
 
     # Create multi-index
     multi_columns_tuples = [(k, v) for k, vs in multi_columns.items() for v in vs]
