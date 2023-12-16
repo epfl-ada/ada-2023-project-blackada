@@ -6,6 +6,7 @@ Included functions:
 - load_data(): Loads the extracted beer data from the specified data directory
 """
 
+import glob
 import json
 import gzip
 import os
@@ -215,21 +216,43 @@ def processed_data_exists(processed_dir: str, num_samples: int | None = None) ->
     Check if the processed data exists in the specified data directory.
 
     Args:
-        processed_dir (str): Path of directory containing raw data.
+        processed_dir (str): Path of directory containing processed data.
+        num_samples (int | None): Number of samples to check for, or None for all data.
 
     Returns:
-        bool: True if processed data exists, else False.
+        bool: True if processed data exists with at least the specified number of samples, else False.
     """
-    files = ["reviews.feather", "docs.spacy"]
-    if num_samples:
-        processed_dir = os.path.join(processed_dir, str(num_samples))
+    if num_samples is None:
+        # Look for 'all' folder
+        return _check_folder(processed_dir, "all")
+    else:
+        # Check all folders with names that can be converted to integers
+        for folder_name in os.listdir(processed_dir):
+            if folder_name.isdigit() and int(folder_name) >= num_samples:
+                if _check_folder(processed_dir, folder_name):
+                    return True
+        return False
 
-    has_path = os.path.isdir(processed_dir)
-    has_files = all(
-        [os.path.isfile(os.path.join(processed_dir, file)) for file in files]
+
+def _check_folder(base_dir: str, folder_name: str) -> bool:
+    """
+    Helper function to check if a specific folder contains the necessary files.
+
+    Args:
+        base_dir (str): Base directory path.
+        folder_name (str): Name of the folder to check.
+
+    Returns:
+        bool: True if the folder contains the necessary files, else False.
+    """
+    folder_path = os.path.join(base_dir, folder_name)
+    reviews_exists = os.path.isfile(os.path.join(folder_path, "reviews.feather"))
+    docs_exists = any(
+        os.path.isfile(os.path.join(folder_path, f))
+        for f in os.listdir(folder_path)
+        if f.endswith(".spacy")
     )
-
-    return has_path and has_files
+    return reviews_exists and docs_exists
 
 
 def process_data(
@@ -238,6 +261,7 @@ def process_data(
     nlp: Language,
     doc_bin: DocBin,
     num_samples: int | None = None,
+    batch_size: int = 300_000,
 ) -> None:
     """
     Processes the raw data in the specified data directory. It loads the raw
@@ -267,6 +291,8 @@ def process_data(
     # Adjust processed directory if num_samples is specified
     if num_samples:
         processed_dir = os.path.join(processed_dir, str(num_samples))
+    else:
+        processed_dir = os.path.join(processed_dir, "all")
 
     # Create processed directory if it does not exist
     os.makedirs(processed_dir, exist_ok=True)
@@ -307,28 +333,37 @@ def process_data(
 
     # Extract SpaCy docs with relevant information
     review_texts = reviews.review.text.tolist()
-    for doc in tqdm(
-        nlp.pipe(review_texts), total=len(review_texts), desc="Processing Spacy docs"
+    for i, doc in enumerate(
+        tqdm(
+            nlp.pipe(review_texts, n_process=-1),
+            total=len(review_texts),
+            desc="Processing Spacy docs",
+        )
     ):
         doc_bin.add(doc)
+        if (i + 1) % batch_size == 0 or i + 1 == len(review_texts):
+            batch_number = (i + 1) // batch_size
+            bath_path = os.path.join(processed_dir, f"docs_{batch_number}.spacy")
+            doc_bin.to_disk(bath_path)
+            doc_bin = DocBin()
+            print(f"Saved batch {batch_number} of Spacy docs.")
 
-    # Save processed reviews as Spacy DocBin
-    doc_bin.to_disk(os.path.join(processed_dir, "docs.spacy"))
+    print("Done processing Spacy docs.")
 
 
 def load_data(
     processed_dir: str,
-    nlp: Language,
+    nlp,
     num_samples: int | None = None,
 ) -> pd.DataFrame:
     """
     Loads the extracted beer data from the specified data directory. It looks for
-    a `reviews.feather` and `docs.spacy` file containing the extracted SpaCy object.
-    If a limit is specified, it looks in the folder `data_dir/{limit}` for the
-    same files which contain a subset of the data.
+    a `reviews.feather` file and multiple `docs_*.spacy` files containing the extracted SpaCy object.
+    If a limit is specified, it loads and optionally downsamples the data to match the specified number of samples.
 
     Args:
         processed_dir (str): Path of directory containing extracted data.
+        nlp: SpaCy language model.
         num_samples (int, optional): Subset of data to load. Defaults to loading all samples. (None)
 
     Returns:
@@ -339,22 +374,55 @@ def load_data(
         processed_dir, num_samples
     ), "Processed data does not exist. Call `process_data()` first."
 
-    # Adjust processed directory if num_samples is specified
-    if num_samples:
-        processed_dir = os.path.join(processed_dir, str(num_samples))
+    # Find the appropriate folder
+    processed_dir = find_appropriate_folder(processed_dir, num_samples)
 
     # Load reviews from feather file
     reviews_path = os.path.join(processed_dir, "reviews.feather")
     reviews = pd.read_feather(reviews_path)
 
-    # Laod SpaCy docs from spacy file
-    docs_path = os.path.join(processed_dir, "docs.spacy")
-    docs = DocBin().from_disk(docs_path).get_docs(nlp.vocab)
+    # Load and concatenate SpaCy docs from all spacy files
+    docs_files = glob.glob(os.path.join(processed_dir, "docs*.spacy"))
+    all_docs = []
+    for file in docs_files:
+        doc_bin = DocBin().from_disk(file)
+        all_docs.extend(list(doc_bin.get_docs(nlp.vocab)))
 
-    # Add SpaCy docs to reviews DataFrame
-    reviews[("review", "doc")] = list(docs)
+    # Downsample reviews and docs if necessary
+    if num_samples and len(reviews) > num_samples:
+        reviews = reviews.head(num_samples)
+        all_docs = all_docs[:num_samples]
+    reviews[("review", "doc")] = all_docs
 
     return reviews
+
+
+def find_appropriate_folder(base_dir: str, num_samples: int | None) -> str:
+    """
+    Find the appropriate folder for the specified number of samples.
+
+    Args:
+        base_dir (str): Base directory path.
+        num_samples (int | None): Number of samples to find.
+
+    Returns:
+        str: Path to the appropriate folder.
+    """
+    if num_samples is None:
+        return os.path.join(base_dir, "all")
+    else:
+        suitable_folders = [
+            f for f in os.listdir(base_dir) if f.isdigit() and int(f) >= num_samples
+        ]
+        if suitable_folders:
+            suitable_folders.sort(key=int)  # Sort folders numerically
+            return os.path.join(base_dir, suitable_folders[0])
+        else:
+            raise FileNotFoundError(
+                "No suitable folder found for the specified number of samples."
+            )
+
+
 
 
 def _load_reviews(data_dir: str) -> pd.DataFrame:
