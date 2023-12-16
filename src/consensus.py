@@ -6,11 +6,11 @@ and a concrete implementation, CosineSimilarityConsensus, using cosine similarit
 """
 
 from abc import abstractmethod, ABC
-from sklearn.metrics.pairwise import cosine_similarity, paired_distances
+from sklearn.metrics import pairwise_distances
+from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import pandas as pd
 from scipy.special import rel_entr
-from scipy.spatial.distance import pdist, squareform
 from scipy.spatial.distance import jensenshannon
 
 
@@ -71,9 +71,10 @@ class KullbackLeiblerDivergence(ConsensusBase):
     between all pairs of embeddings.
     """
 
-    def __init__(self, epsilon=1e-10) -> None:
+    def __init__(self, epsilon=1e-10, n_jobs = -1) -> None:
         super().__init__()
         self.epsilon = epsilon
+        self.n_jobs = n_jobs
 
     def transform(self, embeddings: np.ndarray) -> np.ndarray:
         """
@@ -87,8 +88,11 @@ class KullbackLeiblerDivergence(ConsensusBase):
         """
         normalized_embeddings = self._normalize_embeddings(embeddings)
 
-        divergence_matrix = squareform(
-            pdist(normalized_embeddings, metric=self._kullback_leibler_divergence)
+        divergence_matrix = pairwise_distances(
+            normalized_embeddings,
+            normalized_embeddings,
+            metric=self._kullback_leibler_divergence,
+            n_jobs=self.n_jobs,
         )
         return divergence_matrix
 
@@ -99,7 +103,7 @@ class KullbackLeiblerDivergence(ConsensusBase):
 
     def _kullback_leibler_divergence(self, p: np.ndarray, q: np.ndarray) -> np.ndarray:
         # Compute KL divergence in a vectorized manner
-        return np.sqrt(rel_entr(p,q).sum())
+        return rel_entr(p, q).sum()
 
 
 class JensenShannonDivergence(KullbackLeiblerDivergence):
@@ -121,9 +125,12 @@ class JensenShannonDivergence(KullbackLeiblerDivergence):
             consensus_matrix (np.ndarray): A numpy array of Jensen-Shannon divergences.
         """
         normalized_embeddings = self._normalize_embeddings(embeddings)
-        divergence_matrix = squareform(pdist(normalized_embeddings, 'jensenshannon'))
+        divergence_matrix = pairwise_distances(normalized_embeddings,metric=jensenshannon, n_jobs=self.n_jobs,)
         return divergence_matrix
-
+    
+    def _jensen_shannon_divergence(self, p: np.ndarray, q: np.ndarray) -> np.ndarray:
+        # Compute KL divergence in a vectorized manner
+        return jensenshannon(p, q)
 
 
 class Correlation(ConsensusBase):
