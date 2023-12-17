@@ -6,6 +6,7 @@ Included functions:
 - load_data(): Loads the extracted beer data from the specified data directory
 """
 
+import gc
 import glob
 import json
 import gzip
@@ -261,7 +262,7 @@ def process_data(
     nlp: Language,
     doc_bin: DocBin,
     num_samples: int | None = None,
-    batch_size: int = 300_000,
+    batch_size: int = 200_000,
 ) -> None:
     """
     Processes the raw data in the specified data directory. It loads the raw
@@ -333,6 +334,7 @@ def process_data(
 
     # Extract SpaCy docs with relevant information
     review_texts = reviews.review.text.tolist()
+    batch_number = 0
     for i, doc in enumerate(
         tqdm(
             nlp.pipe(review_texts, n_process=-1),
@@ -342,9 +344,13 @@ def process_data(
     ):
         doc_bin.add(doc)
         if (i + 1) % batch_size == 0 or i + 1 == len(review_texts):
-            batch_number = (i + 1) // batch_size
-            bath_path = os.path.join(processed_dir, f"docs_{batch_number}.spacy")
-            doc_bin.to_disk(bath_path)
+            batch_number += 1
+            batch_path = os.path.join(processed_dir, f"docs_{batch_number}.spacy")
+            doc_bin.to_disk(batch_path)
+
+            # delete from memory
+            del doc_bin
+            gc.collect()
             doc_bin = DocBin()
             print(f"Saved batch {batch_number} of Spacy docs.")
 
@@ -383,11 +389,17 @@ def load_data(
 
     # Load and concatenate SpaCy docs from all spacy files
     docs_files = glob.glob(os.path.join(processed_dir, "docs*.spacy"))
+    docs_files.sort()
+    print(docs_files)
     all_docs = []
+    print(len(docs_files), "files found.")
+    count = 0
     for file in docs_files:
         doc_bin = DocBin().from_disk(file)
+        print(f"Loaded {len(doc_bin)} docs from {file}.")
+        count += len(doc_bin)
         all_docs.extend(list(doc_bin.get_docs(nlp.vocab)))
-
+    print(f"Loaded {count} docs in total.")
     # Downsample reviews and docs if necessary
     if num_samples and len(reviews) > num_samples:
         reviews = reviews.head(num_samples)
