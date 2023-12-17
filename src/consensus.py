@@ -27,7 +27,7 @@ class ConsensusBase(ABC):
         super().__init__()
 
     @abstractmethod
-    def transform(self, embeddings: np.ndarray) -> float:
+    def transform(self, embeddings: np.ndarray) -> np.ndarray:
         """
         Abstract method to transform embeddings into a consensus score.
 
@@ -90,7 +90,6 @@ class KullbackLeiblerDivergence(ConsensusBase):
         normalized_embeddings = self._normalize_embeddings(embeddings)
 
         divergence_matrix = pairwise_distances(
-            normalized_embeddings,
             normalized_embeddings,
             metric=self._kullback_leibler_divergence,
             n_jobs=self.n_jobs,
@@ -168,7 +167,7 @@ class ConsensusLevel:
     """
 
     def __init__(
-        self, aggregator: str | None, consensus: np.ndarray, reviews: pd.DataFrame
+        self, aggregator: tuple[str, str] | None, consensus: np.ndarray, reviews: pd.DataFrame
     ) -> None:
         self.aggregator = aggregator
         self.consensus_matrix = consensus
@@ -220,7 +219,7 @@ class ConsensusLevelEmbedders:
     """
 
     def __init__(
-        self, embeddings: np.ndarray, reviews: pd.DataFrame, aggregator: Optional[str]=None, sub_groups: Optional[list]=None
+        self, embeddings: np.ndarray, reviews: pd.DataFrame, consensus: ConsensusBase, aggregator: Optional[tuple[str, str]]=None, sub_groups: Optional[list]=None
     ) -> None:
         """
         Parameters:
@@ -233,7 +232,7 @@ class ConsensusLevelEmbedders:
         self.sub_groups = sub_groups
         self.embeddings = embeddings
         self.reviews = reviews
-
+        self.consensus = consensus
         self.groups = self._get_groups()
 
     def _get_groups(self) -> list[str]:
@@ -267,7 +266,18 @@ class ConsensusLevelEmbedders:
         """
         return self.embeddings.mean(axis=0, keepdims=True)
 
+    def get_consensus_matrix(self) -> np.ndarray:
+        grop_embeddings = self.get_average_group_embeddings()
+        return self.consensus.transform(grop_embeddings)
     
+    def get_consensus_dist(self, upper = True) -> np.ndarray:
+        consensus_matrix = self.get_consensus_matrix()
+        if upper:
+            indices = np.triu_indices_from(consensus_matrix, k=1)
+            return consensus_matrix[indices]
+        else:
+            indices = np.tril_indices_from(consensus_matrix, k=-1)
+            return consensus_matrix[indices]
 
 
     

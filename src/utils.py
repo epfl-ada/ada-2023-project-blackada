@@ -389,17 +389,15 @@ def load_data(
 
     # Load and concatenate SpaCy docs from all spacy files
     docs_files = glob.glob(os.path.join(processed_dir, "docs*.spacy"))
-    docs_files.sort()
-    print(docs_files)
+
+    if len(docs_files) > 1:
+        docs_files.sort(key=lambda x: int(x.split("_")[-1].split(".")[0]))
     all_docs = []
-    print(len(docs_files), "files found.")
-    count = 0
-    for file in docs_files:
+    for file in tqdm(docs_files, desc="Loading Spacy docs", total=len(docs_files)):
         doc_bin = DocBin().from_disk(file)
-        print(f"Loaded {len(doc_bin)} docs from {file}.")
-        count += len(doc_bin)
         all_docs.extend(list(doc_bin.get_docs(nlp.vocab)))
-    print(f"Loaded {count} docs in total.")
+        del doc_bin
+        gc.collect()
     # Downsample reviews and docs if necessary
     if num_samples and len(reviews) > num_samples:
         reviews = reviews.head(num_samples)
