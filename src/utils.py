@@ -389,7 +389,7 @@ def load_data(
 
     # Load and concatenate SpaCy docs from all spacy files
     docs_files = glob.glob(os.path.join(processed_dir, "docs*.spacy"))
-
+    print(f"Found {len(docs_files)} Spacy docs files.")
     if len(docs_files) > 1:
         docs_files.sort(key=lambda x: int(x.split("_")[-1].split(".")[0]))
     all_docs = []
@@ -397,7 +397,6 @@ def load_data(
         doc_bin = DocBin().from_disk(file)
         all_docs.extend(list(doc_bin.get_docs(nlp.vocab)))
         del doc_bin
-        gc.collect()
     # Downsample reviews and docs if necessary
     if num_samples and len(reviews) > num_samples:
         reviews = reviews.head(num_samples)

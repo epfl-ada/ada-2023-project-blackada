@@ -6,13 +6,13 @@ and a concrete implementation, CosineSimilarityConsensus, using cosine similarit
 """
 
 from abc import abstractmethod, ABC
-from typing import Optional
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import pandas as pd
 from scipy.special import rel_entr
 from scipy.spatial.distance import jensenshannon
+from tqdm import tqdm
 
 
 class ConsensusBase(ABC):
@@ -64,6 +64,35 @@ class CosineSimilarity(ConsensusBase):
         return cosine_similarity(embeddings)
 
 
+class AverageCosineSimilarity(ConsensusBase):
+    """
+    Concrete implementation of ConsensusBase using average cosine similarity.
+
+    This class calculates the consensus as the average cosine similarity
+    between all pairs of embeddings.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def transform(self, embeddings: np.ndarray) -> np.ndarray:
+        """
+        Calculates the cosine similarity between all pairs of embeddings.
+
+        Parameters:
+            embeddings (np.ndarray): A numpy array of embeddings.
+
+        Returns:
+            consensus_matrix (np.ndarray): A numpy array of cosine similarities.
+        """
+        n = embeddings.shape[0]
+        total_similarity = 0.0
+        for i in tqdm(range(n), desc="Calculating average cosine similarity", total=n):
+            similarities = cosine_similarity(embeddings[i, :], embeddings)[0]
+            total_similarity += (np.sum(similarities) - 1.0) / (n - 1)
+        return total_similarity / n  # type: ignore
+
+
 class KullbackLeiblerDivergence(ConsensusBase):
     """
     Concrete implementation of ConsensusBase using Kullback-Leibler divergence.
@@ -72,7 +101,7 @@ class KullbackLeiblerDivergence(ConsensusBase):
     between all pairs of embeddings.
     """
 
-    def __init__(self, epsilon=1e-10, n_jobs = -1) -> None:
+    def __init__(self, epsilon=1e-10, n_jobs=-1) -> None:
         super().__init__()
         self.epsilon = epsilon
         self.n_jobs = n_jobs
@@ -113,7 +142,8 @@ class JensenShannonDivergence(KullbackLeiblerDivergence):
     This class calculates the consensus as the average Jensen-Shannon divergence
     between all pairs of embeddings.
     """
-    def __init__(self, n_jobs = -1) -> None:
+
+    def __init__(self, n_jobs=-1) -> None:
         super().__init__(n_jobs=n_jobs)
 
     def transform(self, embeddings: np.ndarray) -> np.ndarray:
@@ -127,9 +157,10 @@ class JensenShannonDivergence(KullbackLeiblerDivergence):
             consensus_matrix (np.ndarray): A numpy array of Jensen-Shannon divergences.
         """
         normalized_embeddings = self._normalize_embeddings(embeddings)
-        divergence_matrix = pairwise_distances(normalized_embeddings,metric=jensenshannon, n_jobs=self.n_jobs)
+        divergence_matrix = pairwise_distances(
+            normalized_embeddings, metric=jensenshannon, n_jobs=self.n_jobs
+        )
         return divergence_matrix
-
 
 
 class Correlation(ConsensusBase):
@@ -167,7 +198,10 @@ class ConsensusLevel:
     """
 
     def __init__(
-        self, aggregator: tuple[str, str] | None, consensus: np.ndarray, reviews: pd.DataFrame
+        self,
+        aggregator: tuple[str, str] | None,
+        consensus: np.ndarray,
+        reviews: pd.DataFrame,
     ) -> None:
         self.aggregator = aggregator
         self.consensus_matrix = consensus
@@ -209,77 +243,5 @@ class ConsensusLevel:
 
     def __str__(self) -> str:
         return f"ConsensusInGroup(group={self.group})"
-
-
-
-class ConsensusLevelEmbedders:
-    """
-    Helper class for easily retrieving the TF-IDF embeddings within groups at some level of aggregation and represenents at this level
-
-    """
-
-    def __init__(
-        self, embeddings: np.ndarray, reviews: pd.DataFrame, consensus: ConsensusBase, aggregator: Optional[tuple[str, str]]=None, sub_groups: Optional[list]=None
-    ) -> None:
-        """
-        Parameters:
-            embeddings (np.ndarray): A numpy array of embeddings.
-            reviews (pd.DataFrame): A pandas dataframe of reviews.
-            aggregator (str | None): The column name of the aggregation level.
-            sub_groups (list | None): The subgroups to be used for the analysis.
-        """
-        self.aggregator = aggregator
-        self.sub_groups = sub_groups
-        self.embeddings = embeddings
-        self.reviews = reviews
-        self.consensus = consensus
-        self.groups = self._get_groups()
-
-    def _get_groups(self) -> list[str]:
-        if self.aggregator is None:
-            return ["All"]
-        all_groups = self.reviews[self.aggregator].unique().tolist()
-        if self.sub_groups is None:
-            return all_groups
-        else:
-            return [group for group in all_groups if group in self.sub_groups]
-    
-    def _get_group_embeddings(self, group: str) -> np.ndarray:
-        if self.aggregator is None:
-            return self.embeddings
-        is_group = self.reviews[self.aggregator] == group
-        return self.embeddings[is_group]
-    def _get_average_group_embedding(self, group: str) -> np.ndarray:
-        return self._get_group_embeddings(group).mean(axis=0)
-    
-    def get_average_group_embeddings(self) -> np.ndarray:
-        """
-        Returns:
-            average_group_embeddings (np.ndarray): A numpy array of average group embeddings for each sub_group.
-        """
-        return np.array([self._get_average_group_embedding(group) for group in self.groups])
-    
-    def get_average_embedding(self) -> np.ndarray:
-        """
-        Returns:
-            average_embedding (np.ndarray): A numpy array of average embedding across all sub_groups.
-        """
-        return self.embeddings.mean(axis=0, keepdims=True)
-
-    def get_consensus_matrix(self) -> np.ndarray:
-        grop_embeddings = self.get_average_group_embeddings()
-        return self.consensus.transform(grop_embeddings)
-    
-    def get_consensus_dist(self, upper = True) -> np.ndarray:
-        consensus_matrix = self.get_consensus_matrix()
-        if upper:
-            indices = np.triu_indices_from(consensus_matrix, k=1)
-            return consensus_matrix[indices]
-        else:
-            indices = np.tril_indices_from(consensus_matrix, k=-1)
-            return consensus_matrix[indices]
-
-
-    
 
 

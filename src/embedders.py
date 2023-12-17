@@ -16,6 +16,7 @@ Functions
 
 
 from abc import abstractmethod, ABC
+from typing import Optional
 import numpy as np
 import torch
 from transformers import BertTokenizer, BertModel
@@ -85,9 +86,10 @@ class CountEmbedder(EmbedderBase):
 class TfidfEmbedder(EmbedderBase):
     """Embedder which uses a Tfidf vectorizer to transform reviews to Tfidf representations."""
 
-    def __init__(self) -> None:
+    def __init__(self, sparse_output: Optional[bool] = True) -> None:
         super().__init__()
         self.transformer = TfidfVectorizer()
+        self.sparse_output = sparse_output
 
     @property
     def name(self) -> str:
@@ -107,7 +109,7 @@ class TfidfEmbedder(EmbedderBase):
         np.ndarray
             Array of Tfidf embeddings.
         """
-        return self.transformer.fit_transform(reviews).toarray()
+        return self.transformer.fit_transform(reviews).toarray() if not self.sparse_output else self.transformer.fit_transform(reviews)
     
 
 class BertEmbedder(EmbedderBase):
