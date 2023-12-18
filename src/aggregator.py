@@ -1,4 +1,4 @@
-from consensus import ConsensusBase
+from src.consensus import ConsensusBase
 
 
 import numpy as np

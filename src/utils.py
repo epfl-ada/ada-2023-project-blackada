@@ -19,6 +19,7 @@ from collections import Counter, defaultdict
 import gdown
 import numpy as np
 import pandas as pd
+import scipy
 import spacy
 from numpy.linalg import norm
 from spacy.language import Language
@@ -360,6 +361,7 @@ def process_data(
 def load_data(
     processed_dir: str,
     nlp,
+    load_docs: bool = False,
     num_samples: int | None = None,
 ) -> pd.DataFrame:
     """
@@ -386,6 +388,8 @@ def load_data(
     # Load reviews from feather file
     reviews_path = os.path.join(processed_dir, "reviews.feather")
     reviews = pd.read_feather(reviews_path)
+    if not load_docs:
+        return reviews
 
     # Load and concatenate SpaCy docs from all spacy files
     docs_files = glob.glob(os.path.join(processed_dir, "docs*.spacy"))
@@ -430,8 +434,6 @@ def find_appropriate_folder(base_dir: str, num_samples: int | None) -> str:
             raise FileNotFoundError(
                 "No suitable folder found for the specified number of samples."
             )
-
-
 
 
 def _load_reviews(data_dir: str) -> pd.DataFrame:
@@ -642,3 +644,59 @@ def compute_similarity(model, review1: str, review2: str) -> float:
     texts = [review1, review2]
     embeddings = model.transform(texts)
     return cosine_similarity(embeddings[0], embeddings[1])
+
+
+def load_embeddings(processed_dir: str, num_samples: int | None = None) -> np.ndarray:
+    """
+    Loads the embeddings from the specified data directory. It looks for
+    a `embeddings.npz` file and loads it.
+
+    Args:
+        processed_dir (str): Path of directory containing processed data.
+        num_samples (int | None): Subset of data to load. Defaults to loading all samples. (None)
+
+    Returns:
+        np.ndarray: Array of embeddings.
+    """
+    embeddings = scipy.sparse.load_npz(os.path.join(processed_dir, "embeddings.npz"))
+    if num_samples:
+        embeddings = embeddings[:num_samples]
+    return embeddings
+
+
+def filter_data(
+    embeddings: np.ndarray,
+    reviews: pd.DataFrame,
+    min_nbr_reviews: int = 10,
+    max_nbr_reviews=1000,
+    min_words=10,
+) -> tuple[np.ndarray, pd.DataFrame]:
+    """
+    Filters the embeddings and reviews to only contain beers with at least `min_nbr_reviews` reviews.
+
+    Args:
+        embeddings (np.ndarray): Array of embeddings.
+        reviews (pd.DataFrame): DataFrame containing reviews.
+        min_nbr_reviews (int): Minimum number of reviews a beer must have to be included.
+
+    Returns:
+        tuple[np.ndarray, pd.DataFrame]: Filtered embeddings and reviews.
+    """
+    # Filter out beers with less than min_nbr_reviews reviews
+    if min_nbr_reviews:
+        beer_num_reviews = reviews.groupby(("beer", "name")).size()
+        beers_to_keep = beer_num_reviews[beer_num_reviews >= min_nbr_reviews].index
+        reviews = reviews[reviews[("beer", "name")].isin(beers_to_keep)]
+    # Keep only max_nbr_reviews for each beer
+    if max_nbr_reviews:
+        reviews = reviews.groupby(("beer", "name")).head(max_nbr_reviews)
+
+    # Filter out reviews with less than min_words words
+    if min_words:
+        word_lengths = reviews.review.text.apply(lambda x: len(x.split()))
+        reviews = reviews[word_lengths >= min_words]
+    # Filter embeddings 
+    embeddings = embeddings[reviews.index]
+    # Reset index
+    reviews = reviews.reset_index(drop=True)
+    return embeddings, reviews

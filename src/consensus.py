@@ -6,6 +6,7 @@ and a concrete implementation, CosineSimilarityConsensus, using cosine similarit
 """
 
 from abc import abstractmethod, ABC
+import scipy
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
@@ -127,8 +128,12 @@ class KullbackLeiblerDivergence(ConsensusBase):
 
     def _normalize_embeddings(self, embeddings: np.ndarray) -> np.ndarray:
         # Add epsilon and renormalize embeddings
+        # if sparse matrix, convert to dense
+        if isinstance(embeddings, scipy.sparse.csr_matrix):
+            embeddings = embeddings.toarray()
+        
         embeddings += self.epsilon
-        return embeddings / embeddings.sum(axis=1, keepdims=True)
+        return embeddings / np.sum(embeddings, axis=1, keepdims=True)
 
     def _kullback_leibler_divergence(self, p: np.ndarray, q: np.ndarray) -> np.ndarray:
         # Compute KL divergence in a vectorized manner
@@ -184,64 +189,11 @@ class Correlation(ConsensusBase):
         Returns:
             consensus_matrix (np.ndarray): A numpy array of Pearson correlations.
         """
+        # if sparse
+        if isinstance(embeddings, scipy.sparse.csr_matrix):
+            embeddings = embeddings.toarray()
         normalized_embeddings = (
             embeddings - embeddings.mean(axis=1, keepdims=True)
         ) / embeddings.std(axis=1, keepdims=True)
         return np.corrcoef(normalized_embeddings)
-
-
-class ConsensusLevel:
-    """
-    Helper class for easily retrieving consensus distributions within
-    groups at some level of aggregation, e.g. retrieve consensus across
-    IPAs, Pale Ales, ... for aggregation level "Beer Style".
-    """
-
-    def __init__(
-        self,
-        aggregator: tuple[str, str] | None,
-        consensus: np.ndarray,
-        reviews: pd.DataFrame,
-    ) -> None:
-        self.aggregator = aggregator
-        self.consensus_matrix = consensus
-        self.reviews = reviews
-        self.groups = self._get_groups()
-
-    def get_consensus_matrix(self, group: str) -> np.ndarray:
-        assert group in self.groups, f"{group} is not a valid group."
-
-        indices = self._get_group_indices(group)
-        member_similarities = self._subset_matrix(self.consensus_matrix, indices)
-
-        return member_similarities
-
-    def get_consensus_dist(self, group: str) -> float:
-        assert group in self.groups, f"{group} is not a valid group."
-
-        group_consensus_matrix = self.get_consensus_matrix(group)
-        group_consensus_dist = self._get_upper_triangle(group_consensus_matrix)
-        return group_consensus_dist
-
-    def _get_groups(self) -> list[str]:
-        if self.aggregator is None:
-            return ["All"]
-        return self.reviews[self.aggregator].unique().tolist()
-
-    def _get_group_indices(self, group: str) -> list[int]:
-        if self.aggregator is None:
-            return self.reviews.index.tolist()
-        is_group = self.reviews[self.aggregator] == group
-        return self.reviews[is_group].index.tolist()
-
-    def _subset_matrix(self, matrix: np.ndarray, indices: list[int]) -> np.ndarray:
-        return matrix[indices][:, indices]
-
-    def _get_upper_triangle(self, matrix: np.ndarray) -> np.ndarray:
-        indices = np.triu_indices_from(matrix, k=1)
-        return matrix[indices]
-
-    def __str__(self) -> str:
-        return f"ConsensusInGroup(group={self.group})"
-
 
