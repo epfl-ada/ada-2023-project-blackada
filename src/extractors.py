@@ -15,6 +15,7 @@ These classes enable the transformation of spaCy Docs into analyzable data forms
 
 from abc import abstractmethod, ABC
 from spacy.tokens import Doc
+from spacy.lang.en.stop_words import STOP_WORDS
 from typing import List
 
 
@@ -93,6 +94,40 @@ class AdjectiveExtractor(ExtractorBase):
     def name(self) -> str:
         return "AdjectiveExtractor"
 
+
+class StopwordExtractor(ExtractorBase):
+    """
+    Extractor that removes stopwords from spaCy documents.
+    """
+
+    def __init__(self):
+        super().__init__()
+
+        # Add custom stopwords
+        self.STOPWORDS = STOP_WORDS
+        additonal_stopwords = [
+            "beer",
+        ]
+        self.STOPWORDS.update(additonal_stopwords)
+
+    def transform(self, docs: List[Doc]) -> List[str]:
+        """
+        Removes stopwords from documents.
+
+        Parameters:
+        docs (List[Doc]): A list of spaCy Doc objects.
+
+        Returns:
+        List[str]: A list of strings, each containing the non-stopwords of a document.
+        """
+        return [
+            " ".join([token.text for token in doc if not token.is_stop and token.text not in self.STOPWORDS])
+            for doc in docs
+        ]
+
+    @property
+    def name(self) -> str:
+        return "StopwordExtractor"
 
 class DummyExtractor(ExtractorBase):
     """
