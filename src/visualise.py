@@ -6,6 +6,7 @@ import seaborn as sns
 def embeddings(
     embeddings: np.ndarray,
     hue: list,
+    color_palette: dict,
     subset: list[int] | None = None,
     plot_type="scatter",
     figsize: tuple[int, int] = (5, 5),
@@ -38,6 +39,8 @@ def embeddings(
     Returns:
         None
     """
+    kwargs['palette'] = color_palette
+
     if not ax:
         _, ax = plt.subplots(figsize)
 
