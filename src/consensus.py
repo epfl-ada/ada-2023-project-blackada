@@ -131,7 +131,7 @@ class KullbackLeiblerDivergence(ConsensusBase):
         # if sparse matrix, convert to dense
         if isinstance(embeddings, scipy.sparse.csr_matrix):
             embeddings = embeddings.toarray()
-        
+
         embeddings += self.epsilon
         return embeddings / np.sum(embeddings, axis=1, keepdims=True)
 
@@ -148,8 +148,8 @@ class JensenShannonDivergence(KullbackLeiblerDivergence):
     between all pairs of embeddings.
     """
 
-    def __init__(self, n_jobs=-1) -> None:
-        super().__init__(n_jobs=n_jobs)
+    def __init__(self, epsilon = 1e-10, n_jobs=-1) -> None:
+        super().__init__(epsilon=epsilon, n_jobs=n_jobs)
 
     def transform(self, embeddings: np.ndarray) -> np.ndarray:
         """
@@ -176,8 +176,10 @@ class Correlation(ConsensusBase):
     between all pairs of embeddings.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, epsilon=1e-10, n_jobs=-1) -> None:
         super().__init__()
+        self.epsilon = epsilon
+        self.n_jobs = n_jobs
 
     def transform(self, embeddings: np.ndarray) -> np.ndarray:
         """
@@ -192,8 +194,4 @@ class Correlation(ConsensusBase):
         # if sparse
         if isinstance(embeddings, scipy.sparse.csr_matrix):
             embeddings = embeddings.toarray()
-        normalized_embeddings = (
-            embeddings - embeddings.mean(axis=1, keepdims=True)
-        ) / embeddings.std(axis=1, keepdims=True)
-        return np.corrcoef(normalized_embeddings)
-
+        return pairwise_distances(embeddings, metric="correlation", n_jobs=self.n_jobs)
