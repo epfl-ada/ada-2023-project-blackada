@@ -67,6 +67,7 @@ class LemmaExtractor(ExtractorBase):
     def name(self) -> str:
         return "LemmaExtractor"
 
+
 class AdjectiveExtractor(ExtractorBase):
     """
     Extractor that retrieves adjectives from spaCy documents.
@@ -107,10 +108,37 @@ class StopwordExtractor(ExtractorBase):
         self.STOPWORDS = STOP_WORDS
         additonal_stopwords = [
             "beer",
+            "ale",
+            "ipa",
+            "lager",
+            "stout",
+            "porter",
+            "pilsner",
+            "brew",
+            "brewery",
+            "drink",
+            "flavor",
+            "taste",
+            "smell",
+            "aroma",
+            "pour",
+            "head",
+            "carbonation",
+            "review",
+            "hint",
+            "like",
+            "bottle",
+            "body",
+            "malt",
+            "bit",
+            "medium",
+            "finish",
+            "note",
+            "color"
         ]
         self.STOPWORDS.update(additonal_stopwords)
 
-    def transform(self, docs: List[Doc]) -> List[str]:
+    def transform(self, docs: List[Doc], lemmatize=False) -> List[str]:
         """
         Removes stopwords from documents.
 
@@ -120,14 +148,26 @@ class StopwordExtractor(ExtractorBase):
         Returns:
         List[str]: A list of strings, each containing the non-stopwords of a document.
         """
-        return [
-            " ".join([token.text for token in doc if not token.is_stop and token.text not in self.STOPWORDS])
-            for doc in docs
-        ]
+
+        # Define stopword removal function
+        if lemmatize:
+            stopword_remove = lambda token: not token.is_stop and token.text not in self.STOPWORDS and token.lemma_ not in self.STOPWORDS
+        else:
+            stopword_remove = lambda token: not token.is_stop and token.text not in self.STOPWORDS
+
+        # Remove stopwords
+        tokens = [[token for token in doc if stopword_remove(token)] for doc in docs]
+
+        # Lemmatize if specified
+        if lemmatize:
+            return [" ".join([token.lemma_ for token in doc]) for doc in tokens]
+        else:
+            return [" ".join([token.text for token in doc]) for doc in tokens]
 
     @property
     def name(self) -> str:
         return "StopwordExtractor"
+
 
 class DummyExtractor(ExtractorBase):
     """
