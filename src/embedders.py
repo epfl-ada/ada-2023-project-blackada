@@ -27,7 +27,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 class EmbedderBase(ABC):
     """Abstract class for all embedders which provides an interface for embedding reviews."""
-    
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -46,7 +46,7 @@ class EmbedderBase(ABC):
         ----------
         reviews : list[str]
             List of reviews to be embedded.
-        
+
         Returns
         -------
         np.ndarray
@@ -109,8 +109,23 @@ class TfidfEmbedder(EmbedderBase):
         np.ndarray
             Array of Tfidf embeddings.
         """
-        return self.transformer.fit_transform(reviews).toarray() if not self.sparse_output else self.transformer.fit_transform(reviews)
-    
+        return (
+            self.transformer.fit_transform(reviews).toarray()
+            if not self.sparse_output
+            else self.transformer.fit_transform(reviews)
+        )
+
+    def get_feature_names(self) -> list[str]:
+        """
+        Get the ordered feature names of the Tfidf vectorizer.
+
+        Returns
+        -------
+        list[str]
+            List of feature names.
+        """
+        return self.transformer.get_feature_names_out()
+
 
 class BertEmbedder(EmbedderBase):
     """Embedder which uses Bert to convert reviews to Bert embeddings."""
@@ -148,7 +163,9 @@ class BertEmbedder(EmbedderBase):
         reviews = list(reviews)
 
         # Get tokenized input
-        tokenized_reviews = self.tokenizer(reviews, padding=True, truncation=True, return_tensors="pt").to(self.device)
+        tokenized_reviews = self.tokenizer(
+            reviews, padding=True, truncation=True, return_tensors="pt"
+        ).to(self.device)
 
         with torch.no_grad():
             # Get Bert embeddings for all tokens and hidden layers
@@ -159,7 +176,7 @@ class BertEmbedder(EmbedderBase):
         avg_embedding = output.hidden_states[-2].mean(dim=1)
 
         return avg_embedding.cpu().numpy()
-    
+
 
 class SentenceTransformerEmbedder(EmbedderBase):
     """Embedder which uses sentence-transformers to convert reviews to sentence-transformer embeddings."""
