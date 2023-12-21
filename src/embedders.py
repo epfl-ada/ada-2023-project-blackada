@@ -1,28 +1,16 @@
-"""
-Module containing classes and functionality used to embed lists of reviews.
-
-Classes
--------
-- EmbedderBase: Abstract base class for all embedders.
-- CountEmbedder: Uses a count vectorizer from sklearn.
-- TfidfEmbedder: Uses a Tfidf vectorizer from sklearn.
-- BertEmbedder: Uses 'bert-base-uncased' from HF.
-- SentenceTransformerEmbedder: Uses 'all-MiniLM-L6-v2' from sentence-transformers.
-
-Functions
----------
-- _get_torch_device(): Returns the device to be used for PyTorch operations.
-"""
-
-
 from abc import abstractmethod, ABC
 from typing import Optional
+
 import numpy as np
 import torch
+
 from transformers import BertTokenizer, BertModel
 from sentence_transformers import SentenceTransformer
+
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
+
+from src.utils import get_torch_device
 
 
 class EmbedderBase(ABC):
@@ -42,15 +30,11 @@ class EmbedderBase(ABC):
         """
         Embed a list of reviews.
 
-        Parameters
-        ----------
-        reviews : list[str]
-            List of reviews to be embedded.
+        Args:
+            reviews (list[str]): List of reviews to be embedded.
 
-        Returns
-        -------
-        np.ndarray
-            Array of embeddings.
+        Returns:
+            np.ndarray: Array of embeddings.
         """
         pass
 
@@ -68,17 +52,13 @@ class CountEmbedder(EmbedderBase):
 
     def transform(self, reviews: list[str]) -> np.ndarray:
         """
-        Embed a list of reviews by counting occurence of words.
+        Embed a list of reviews using count vectorization.
 
-        Parameters
-        ----------
-        reviews : list[str]
-            List of reviews to be converted to counts.
+        Args:
+            reviews (list[str]): List of reviews to be converted to counts.
 
-        Returns
-        -------
-        np.ndarray
-            Array of counts.
+        Returns:
+            np.ndarray: Array of counts.
         """
         return self.vectorizer.fit_transform(reviews).toarray()
 
@@ -97,17 +77,13 @@ class TfidfEmbedder(EmbedderBase):
 
     def transform(self, reviews: list[str]) -> np.ndarray:
         """
-        Embed a list of reviews using Tfidf transformation.
+        Embed a list of reviews using Tfidf vectorization.
 
-        Parameters
-        ----------
-        reviews : list[str]
-            List of reviews to be converted to transformed.
+        Args:
+            reviews (list[str]): List of reviews to be converted to Tfidf representations.
 
-        Returns
-        -------
-        np.ndarray
-            Array of Tfidf embeddings.
+        Returns:
+            np.ndarray: Array of Tfidf representations.
         """
         return (
             self.transformer.fit_transform(reviews).toarray()
@@ -117,12 +93,10 @@ class TfidfEmbedder(EmbedderBase):
 
     def get_feature_names(self) -> list[str]:
         """
-        Get the ordered feature names of the Tfidf vectorizer.
+        Get the feature names of the Tfidf vectorizer.
 
-        Returns
-        -------
-        list[str]
-            List of feature names.
+        Returns:
+            list[str]: List of feature names.
         """
         return self.transformer.get_feature_names_out()
 
@@ -134,7 +108,7 @@ class BertEmbedder(EmbedderBase):
         super().__init__()
 
         # Get GPU if available
-        self.device = _get_torch_device()
+        self.device = get_torch_device()
 
         # Load pre-trained model & tokenizer
         self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
@@ -149,16 +123,13 @@ class BertEmbedder(EmbedderBase):
         """
         Embed a list of reviews using Bert.
 
-        Parameters
-        ----------
-        reviews : list[str]
-            List of reviews to be converted to Bert embeddings.
+        Args:
+            reviews (list[str]): List of reviews to be converted to Bert embeddings.
 
-        Returns
-        -------
-        np.ndarray
-            Array of Bert embeddings.
+        Returns:
+            np.ndarray: Array of Bert embeddings.
         """
+
         # Convert to list if not already (e.g. for Pandas Series or one review is passed)
         reviews = list(reviews)
 
@@ -183,7 +154,7 @@ class SentenceTransformerEmbedder(EmbedderBase):
 
     def __init__(self) -> None:
         super().__init__()
-        self.device = _get_torch_device()
+        self.device = get_torch_device()
         self.model = SentenceTransformer("all-MiniLM-L6-v2").to(self.device)
 
     @property
@@ -194,30 +165,10 @@ class SentenceTransformerEmbedder(EmbedderBase):
         """
         Embed a list of reviews using sentence-transformers.
 
-        Parameters
-        ----------
-        reviews : list[str]
-            List of reviews to be converted to sentence-transformer embeddings.
+        Args:
+            reviews (list[str]): List of reviews to be converted to sentence-transformer embeddings.
 
-        Returns
-        -------
-        np.ndarray
-            Array of sentence-transformer embeddings.
+        Returns:
+            np.ndarray: Array of sentence-transformer embeddings.
         """
         return self.model.encode(reviews, convert_to_numpy=True)
-
-
-def _get_torch_device() -> torch.device:
-    """
-    Returns the device to be used for PyTorch operations.
-
-    Returns
-    -------
-        torch.device: Device to be used for PyTorch operations.
-    """
-    if torch.backends.mps.is_available():
-        return torch.device("mps")
-    elif torch.cuda.is_available():
-        return torch.device("cuda")
-    else:
-        return torch.device("cpu")

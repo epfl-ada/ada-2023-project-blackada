@@ -1,14 +1,5 @@
-"""
-Module containing utility files used throughout the project.
-
-Included functions:
-- download_data(): Downloads and extracts the zipped `BeerAdvocate` data from a Google Drive URL
-- load_data(): Loads the extracted beer data from the specified data directory
-"""
-
 import gc
 import glob
-import json
 import gzip
 import os
 import shutil
@@ -24,6 +15,7 @@ import spacy
 from numpy.linalg import norm
 from spacy.language import Language
 from spacy.tokens import DocBin
+import torch
 from tqdm import tqdm
 
 # Constants
@@ -388,23 +380,33 @@ def load_data(
     # Load reviews from feather file
     reviews_path = os.path.join(processed_dir, "reviews.feather")
     reviews = pd.read_feather(reviews_path)
+
+    # Sanity Check
+    if num_samples and len(reviews) > num_samples:
+        raise ValueError(
+            "The number of reviews should match the number of num samples specified!"
+        )
+
+    # If no loading of docs is specified, return reviews only
     if not load_docs:
         return reviews
 
-    # Load and concatenate SpaCy docs from all spacy files
+    # Get all docs files paths
     docs_files = glob.glob(os.path.join(processed_dir, "docs*.spacy"))
     print(f"Found {len(docs_files)} Spacy docs files.")
+
+    # Sort files numerically
     if len(docs_files) > 1:
         docs_files.sort(key=lambda x: int(x.split("_")[-1].split(".")[0]))
+
+    # Load the files, and save the docs in a list
     all_docs = []
     for file in tqdm(docs_files, desc="Loading Spacy docs", total=len(docs_files)):
         doc_bin = DocBin().from_disk(file)
         all_docs.extend(list(doc_bin.get_docs(nlp.vocab)))
         del doc_bin
-    # Downsample reviews and docs if necessary
-    if num_samples and len(reviews) > num_samples:
-        reviews = reviews.head(num_samples)
-        all_docs = all_docs[:num_samples]
+
+    # Add docs to reviews
     reviews[("review", "doc")] = all_docs
 
     return reviews
@@ -695,8 +697,23 @@ def filter_data(
     if min_words:
         word_lengths = reviews.review.text.apply(lambda x: len(x.split()))
         reviews = reviews[word_lengths >= min_words]
-    # Filter embeddings 
+    # Filter embeddings
     embeddings = embeddings[reviews.index]
     # Reset index
     reviews = reviews.reset_index(drop=True)
     return embeddings, reviews
+
+
+def get_torch_device() -> torch.device:
+    """
+    Returns the appropriate torch device.
+
+    Returns:
+        torch.device: The appropriate torch device.
+    """
+    if torch.backends.mps.is_available():
+        return torch.device("mps")
+    elif torch.cuda.is_available():
+        return torch.device("cuda")
+    else:
+        return torch.device("cpu")

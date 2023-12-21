@@ -39,7 +39,7 @@ def embeddings(
     Returns:
         None
     """
-    kwargs['palette'] = color_palette
+    kwargs["palette"] = color_palette
 
     if not ax:
         _, ax = plt.subplots(figsize)

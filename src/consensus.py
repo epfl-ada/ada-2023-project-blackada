@@ -1,19 +1,14 @@
-"""
-Module for computing consensus scores from embeddings.
-
-Provides an abstract base class, ConsensusBase, for defining consensus calculation methods,
-and a concrete implementation, CosineSimilarityConsensus, using cosine similarity.
-"""
-
 from abc import abstractmethod, ABC
-import scipy
+from tqdm import tqdm
+
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics.pairwise import cosine_similarity
+
 import numpy as np
-import pandas as pd
+
+import scipy
 from scipy.special import rel_entr
 from scipy.spatial.distance import jensenshannon
-from tqdm import tqdm
 
 
 class ConsensusBase(ABC):
@@ -32,11 +27,11 @@ class ConsensusBase(ABC):
         """
         Abstract method to transform embeddings into a consensus score.
 
-        Parameters:
-        embeddings (np.ndarray): A numpy array of embeddings.
+        Args:
+            embeddings (np.ndarray): A numpy array of embeddings.
 
         Returns:
-        float: The calculated consensus score.
+            consensus_matrix (np.ndarray): A numpy array of consensus scores.
         """
         pass
 
@@ -56,7 +51,7 @@ class CosineSimilarity(ConsensusBase):
         """
         Calculates the cosine similarity between all pairs of embeddings.
 
-        Parameters:
+        Args:
             embeddings (np.ndarray): A numpy array of embeddings.
 
         Returns:
@@ -80,7 +75,7 @@ class AverageCosineSimilarity(ConsensusBase):
         """
         Calculates the cosine similarity between all pairs of embeddings.
 
-        Parameters:
+        Args:
             embeddings (np.ndarray): A numpy array of embeddings.
 
         Returns:
@@ -111,7 +106,7 @@ class KullbackLeiblerDivergence(ConsensusBase):
         """
         Calculates the Kullback-Leibler divergence between all pairs of embeddings.
 
-        Parameters:
+        Args:
             embeddings (np.ndarray): A numpy array of embeddings.
 
         Returns:
@@ -127,6 +122,15 @@ class KullbackLeiblerDivergence(ConsensusBase):
         return divergence_matrix
 
     def _normalize_embeddings(self, embeddings: np.ndarray) -> np.ndarray:
+        """
+        Normalizes embeddings by adding epsilon and renormalizing.
+
+        Args:
+            embeddings: A numpy array of embeddings.
+
+        Returns:
+            A numpy array of normalized embeddings.
+        """
         # Add epsilon and renormalize embeddings
         # if sparse matrix, convert to dense
         if isinstance(embeddings, scipy.sparse.csr_matrix):
@@ -136,7 +140,16 @@ class KullbackLeiblerDivergence(ConsensusBase):
         return embeddings / np.sum(embeddings, axis=1, keepdims=True)
 
     def _kullback_leibler_divergence(self, p: np.ndarray, q: np.ndarray) -> np.ndarray:
-        # Compute KL divergence in a vectorized manner
+        """
+        Calculates the Kullback-Leibler divergence between two embeddings.
+
+        Args:
+            p: A numpy array of embeddings.
+            q: A numpy array of embeddings.
+
+        Returns:
+            A numpy array of Kullback-Leibler divergences.
+        """
         return rel_entr(p, q).sum()
 
 
@@ -148,14 +161,14 @@ class JensenShannonDivergence(KullbackLeiblerDivergence):
     between all pairs of embeddings.
     """
 
-    def __init__(self, epsilon = 1e-10, n_jobs=-1) -> None:
+    def __init__(self, epsilon=1e-10, n_jobs=-1) -> None:
         super().__init__(epsilon=epsilon, n_jobs=n_jobs)
 
     def transform(self, embeddings: np.ndarray) -> np.ndarray:
         """
         Calculates the Jensen-Shannon divergence between all pairs of embeddings.
 
-        Parameters:
+        Args:
             embeddings (np.ndarray): A numpy array of embeddings.
 
         Returns:
@@ -185,7 +198,7 @@ class Correlation(ConsensusBase):
         """
         Calculates the Pearson correlation between all pairs of embeddings.
 
-        Parameters:
+        Args:
             embeddings (np.ndarray): A numpy array of embeddings.
 
         Returns:

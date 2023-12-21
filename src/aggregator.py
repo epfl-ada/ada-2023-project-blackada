@@ -1,10 +1,8 @@
 from src.consensus import ConsensusBase
 
-
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-
 
 from typing import Optional
 
@@ -26,11 +24,12 @@ class EmbeddingAggregator:
         """
         Initializes the EmbeddingAggregator with data and configuration.
 
-        :param embeddings: A numpy array of embeddings.
-        :param reviews: A pandas DataFrame containing review data.
-        :param consensus: An instance of a consensus algorithm class.
-        :param aggregator_column: The column name to be used for grouping the data.
-        :param sub_groups: A list of specific subgroups to consider within the aggregator column.
+        Args:
+            embeddings: A numpy array of TF-IDF embeddings.
+            reviews: A dataframe of review data.
+            consensus: A consensus object.
+            aggregator_column: A tuple of column name and column value to aggregate by.
+            sub_groups: A list of subgroups to consider.
         """
         self.embeddings = embeddings
         self.reviews = reviews
@@ -43,7 +42,8 @@ class EmbeddingAggregator:
         """
         Identifies groups based on the aggregator column and subgroups, if provided.
 
-        :return: A list of groups.
+        Returns:
+            A list of group names.
         """
         if not self.aggregator_column:
             return ["All"]
@@ -58,19 +58,26 @@ class EmbeddingAggregator:
         """
         Retrieves embeddings for a specific group.
 
-        :param group: The group name.
-        :return: A numpy array of embeddings for the specified group.
+        Args:
+            group: The group name.
+
+        Returns:
+            A numpy array of embeddings for the group.
         """
+
         if not self.aggregator_column or group == "All":
             return self.embeddings
+
         group_filter = self.reviews[self.aggregator_column] == group
+
         return self.embeddings[group_filter]
 
     def get_average_embeddings(self) -> dict[str, np.ndarray]:
         """
         Calculates the average embeddings for each group.
 
-        :return: A dictionary with group names as keys and their average embeddings as values.
+        Returns:
+            A dictionary of group names and average embeddings.
         """
         return {
             group: self.get_embeddings_by_group(group).mean(axis=0)
@@ -85,9 +92,12 @@ class EmbeddingAggregator:
         """
         Generates a consensus matrix for a given group.
 
-        :param group: The group name.
-        :param max_samples: Maximum number of samples to consider for the consensus matrix.
-        :return: A consensus matrix as a numpy array.
+        Args:
+            group: The group name.
+            max_samples: Maximum number of samples to consider.
+
+        Returns:
+            A numpy array representing the consensus matrix.
         """
         embeddings = self.get_embeddings_by_group(group)
         sample_size = min(embeddings.shape[0], max_samples)
@@ -102,10 +112,13 @@ class EmbeddingAggregator:
         """
         Computes the consensus distribution for a given group.
 
-        :param group: The group name.
-        :param upper: If True, uses the upper triangle of the matrix; otherwise, the lower triangle.
-        :param max_samples: Maximum number of samples to consider.
-        :return: A numpy array representing the consensus distribution.
+        Args:
+            group: The group name.
+            upper: If True, uses the upper triangle of the matrix; otherwise, the lower triangle.
+            max_samples: Maximum number of samples to consider.
+
+        Returns:
+            A numpy array representing the consensus distribution.
         """
         consensus_matrix = self.get_consensus_matrix(group, max_samples)
         indices = (
@@ -119,7 +132,8 @@ class EmbeddingAggregator:
         """
         Calculates the average embedding across all groups or the entire dataset if no groups are defined.
 
-        :return: The overall average embedding as a numpy array.
+        Returns:
+            A numpy array representing the average embedding.
         """
         group_embeddings = self.get_average_embeddings().values()
         return np.vstack(list(group_embeddings))
@@ -128,7 +142,8 @@ class EmbeddingAggregator:
         """
         Calculates the consensus matrix for the entire dataset or across all defined groups.
 
-        :return: The overall consensus matrix as a numpy array.
+        Returns:
+            A numpy array representing the consensus matrix.
         """
         overall_embeddings = self.get_overall_average_embedding()
         overall_embeddings = np.asarray(overall_embeddings)
@@ -138,8 +153,11 @@ class EmbeddingAggregator:
         """
         Computes the overall consensus distribution for the dataset.
 
-        :param upper: If True, uses the upper triangle of the matrix; otherwise, the lower triangle.
-        :return: A numpy array representing the overall consensus distribution.
+        Args:
+            upper: If True, uses the upper triangle of the matrix; otherwise, the lower triangle.
+
+        Returns:
+            A numpy array representing the consensus distribution.
         """
         consensus_matrix = self.get_overall_consensus_matrix()
         indices = (

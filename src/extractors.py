@@ -1,18 +1,3 @@
-"""
-SpaCy Document Feature Extraction Module
-
-This module offers classes for extracting linguistic features from spaCy Doc objects, ideal for text analysis tasks like beer review analysis. Each class inherits from the abstract base class ExtractorBase and implements a unique feature extraction method.
-
-Classes:
-- ExtractorBase: Defines the feature extraction interface.
-- LemmaExtractor: Retrieves lemmatized word forms from documents.
-- AdjectiveExtractor: Isolates adjectives from documents.
-- DummyExtractor: Extracts the original text of documents.
-
-These classes enable the transformation of spaCy Docs into analyzable data forms like lemmas, adjectives, or raw text.
-"""
-
-
 from abc import abstractmethod, ABC
 from spacy.tokens import Doc
 from spacy.lang.en.stop_words import STOP_WORDS
@@ -34,11 +19,11 @@ class ExtractorBase(ABC):
         """
         Abstract method to transform a list of spaCy Docs into extracted features.
 
-        Parameters:
-        docs (List[Doc]): A list of spaCy Doc objects.
+        Args:
+            docs (List[Doc]): A list of spaCy Doc objects.
 
         Returns:
-        List[str]: A list of extracted features in string format.
+            List[str]: A list of extracted features in string format.
         """
         pass
 
@@ -55,11 +40,11 @@ class LemmaExtractor(ExtractorBase):
         """
         Transforms documents into a list of lemmatized word strings.
 
-        Parameters:
-        docs (List[Doc]): A list of spaCy Doc objects.
+        Args:
+            docs (List[Doc]): A list of spaCy Doc objects.
 
         Returns:
-        List[str]: A list of strings, each string containing the lemmatized words of a document.
+            List[str]: A list of strings, each string containing the lemmatized words of a document.
         """
         return [" ".join([token.lemma_ for token in doc]) for doc in docs]
 
@@ -80,11 +65,11 @@ class AdjectiveExtractor(ExtractorBase):
         """
         Transforms documents into a list of strings containing adjectives.
 
-        Parameters:
-        docs (List[Doc]): A list of spaCy Doc objects.
+        Args:
+            docs (List[Doc]): A list of spaCy Doc objects.
 
         Returns:
-        List[str]: A list of strings, each containing the adjectives of a document.
+            List[str]: A list of strings, each containing the adjectives of a document.
         """
         return [
             " ".join([token.text for token in doc if token.pos_.startswith("ADJ")])
@@ -134,7 +119,7 @@ class StopwordExtractor(ExtractorBase):
             "medium",
             "finish",
             "note",
-            "color"
+            "color",
         ]
         self.STOPWORDS.update(additonal_stopwords)
 
@@ -142,18 +127,24 @@ class StopwordExtractor(ExtractorBase):
         """
         Removes stopwords from documents.
 
-        Parameters:
-        docs (List[Doc]): A list of spaCy Doc objects.
+        Args:
+            docs (List[Doc]): A list of spaCy Doc objects.
 
         Returns:
-        List[str]: A list of strings, each containing the non-stopwords of a document.
+            List[str]: A list of strings, each containing the non-stopwords of a document.
         """
 
         # Define stopword removal function
         if lemmatize:
-            stopword_remove = lambda token: not token.is_stop and token.text not in self.STOPWORDS and token.lemma_ not in self.STOPWORDS
+            stopword_remove = (
+                lambda token: not token.is_stop
+                and token.text not in self.STOPWORDS
+                and token.lemma_ not in self.STOPWORDS
+            )
         else:
-            stopword_remove = lambda token: not token.is_stop and token.text not in self.STOPWORDS
+            stopword_remove = (
+                lambda token: not token.is_stop and token.text not in self.STOPWORDS
+            )
 
         # Remove stopwords
         tokens = [[token for token in doc if stopword_remove(token)] for doc in docs]
