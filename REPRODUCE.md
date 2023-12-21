@@ -1,4 +1,4 @@
-# Installation
+## Installation
 
 To reproduce all results, this notebook should be run with the correct **Python version** inside the specified **virtual environment** to use all packages with the correct version.
 
@@ -30,3 +30,11 @@ python -m spacy download en_core_web_sm
 ```
 
 You can now run the project by using the virtual environment created by Poetry. In VSCode activate the `venv` environment that is created in the `/.venv` in the root directory. You can also use the environment via the command line by running `poetry shell`. Here, you should use the correct Python executable and have all dependencies installed. Exit the environment via `exit`.
+
+## Getting the Data (Optional)
+
+Given the large size of the dataset, it is advisable to download the raw as well as the processed data, so you can rather focus on our analysis. The below command will download the data to the `data` directory in the root directory. It takes around 17 min.
+
+```bash
+huggingface-cli download ludekcizinsky/blackada --local-dir data --repo-type dataset
+```
