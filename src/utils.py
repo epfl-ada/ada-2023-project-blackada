@@ -2,6 +2,7 @@ import gc
 import glob
 import gzip
 import os
+import pickle
 import shutil
 import subprocess
 import tarfile
@@ -717,3 +718,27 @@ def get_torch_device() -> torch.device:
         return torch.device("cuda")
     else:
         return torch.device("cpu")
+
+
+def load_vocab(processed_dir: str) -> np.ndarray:
+    """
+    Loads vocabulary corresponding to the tfidf matrix column dimension.
+
+    Args:
+        processed_dir(str) : path to the vocab file
+
+    Returns:
+        vocab(np.ndarray) : 1d array containing the vocabulary
+    """
+    # Loads a dict where key is the word and value is the index in tfidf matrix
+    vocab_path = os.path.join(processed_dir, "vocab.pkl")
+    with open(vocab_path, "rb") as f:
+        vocab = pickle.load(f)
+
+    # Parse into an array
+    vocab = sorted(
+        [(word, index) for word, index in vocab.items()], key=lambda x: x[1], reverse=False
+    )
+    vocab = np.array([word for word, _ in vocab])
+
+    return vocab
