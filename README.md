@@ -5,7 +5,7 @@
 Here is a list of things that you likely want to do:
 
 - 🍿 Check out our [datastory](https://ada-2023-project-blackada-webpage.vercel.app/).
-- 🧪 Take a look at our detailed [analysis](main.ipynb) 
+- 🧪 Take a look at our detailed [analysis](main.ipynb). 
 
 ## 💡 Abstract
 
@@ -46,7 +46,6 @@ Before embedding the reviews, we implemented different options for pre-processin
 - Adjective Extraction: We extract only the adjectives from the reviews.
 - Stopword Removal: We remove common words that do not add meaning to the text.
 
-Further details on the methods are discussed in [main.ipynb](main.ipynb) and [playground/extractors.ipynb](playground/extractors.ipynb) notebooks.
 
 ### Textual Embeddings
 
@@ -57,7 +56,6 @@ We investigate four different potential text embedding models.
 - BERT: Embeds review using the pre-trained `bert-base-uncased` model. BERT is a bidirectional encoder-only transformer trained to be effective at various NLP tasks.
 - SentenceTransformers: Embeds review using the pre-trained `all-MiniLM-L6-v2` model. The model uses BERT as a backbone, and undergoes further training using Siamese networks.
 
-Further details on the methods are discussed in [main.ipynb](main.ipynb) and [playground/embedders.ipynb](playground/embedders.ipynb) notebooks.
 
 ### Consensus Calculation
 
