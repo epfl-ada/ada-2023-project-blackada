@@ -5,7 +5,7 @@
 Here is a list of things that you likely want to do:
 
 - 🍿 Check out our [datastory](https://ada-2023-project-blackada-webpage.vercel.app/).
-- 🧪 Take a look at our detailed [analysis](main.ipynb) 
+- 🧪 Take a look at our detailed [analysis](main.ipynb). 
 
 ## 💡 Abstract
 
