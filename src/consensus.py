@@ -60,41 +60,11 @@ class CosineSimilarity(ConsensusBase):
         return cosine_similarity(embeddings)
 
 
-class AverageCosineSimilarity(ConsensusBase):
-    """
-    Concrete implementation of ConsensusBase using average cosine similarity.
-
-    This class calculates the consensus as the average cosine similarity
-    between all pairs of embeddings.
-    """
-
-    def __init__(self) -> None:
-        super().__init__()
-
-    def transform(self, embeddings: np.ndarray) -> np.ndarray:
-        """
-        Calculates the cosine similarity between all pairs of embeddings.
-
-        Args:
-            embeddings (np.ndarray): A numpy array of embeddings.
-
-        Returns:
-            consensus_matrix (np.ndarray): A numpy array of cosine similarities.
-        """
-        n = embeddings.shape[0]
-        total_similarity = 0.0
-        for i in tqdm(range(n), desc="Calculating average cosine similarity", total=n):
-            similarities = cosine_similarity(embeddings[i, :], embeddings)[0]
-            total_similarity += (np.sum(similarities) - 1.0) / (n - 1)
-        return total_similarity / n  # type: ignore
-
-
 class KullbackLeiblerDivergence(ConsensusBase):
     """
     Concrete implementation of ConsensusBase using Kullback-Leibler divergence.
 
-    This class calculates the consensus as the average Kullback-Leibler divergence
-    between all pairs of embeddings.
+    This class calculates the consensus as the reciprocal of the Kullback-Leibler divergence
     """
 
     def __init__(self, epsilon=1e-10, n_jobs=-1) -> None:
@@ -104,7 +74,7 @@ class KullbackLeiblerDivergence(ConsensusBase):
 
     def transform(self, embeddings: np.ndarray) -> np.ndarray:
         """
-        Calculates the Kullback-Leibler divergence between all pairs of embeddings.
+        Calculates the reciprocal Kullback-Leibler divergence between all pairs of embeddings.
 
         Args:
             embeddings (np.ndarray): A numpy array of embeddings.
@@ -119,7 +89,8 @@ class KullbackLeiblerDivergence(ConsensusBase):
             metric=self._kullback_leibler_divergence,
             n_jobs=self.n_jobs,
         )
-        return divergence_matrix
+        similarity_matrix = 1 / (1 + divergence_matrix)
+        return similarity_matrix
 
     def _normalize_embeddings(self, embeddings: np.ndarray) -> np.ndarray:
         """
@@ -157,8 +128,7 @@ class JensenShannonDivergence(KullbackLeiblerDivergence):
     """
     Concrete implementation of ConsensusBase using Jensen-Shannon divergence.
 
-    This class calculates the consensus as the average Jensen-Shannon divergence
-    between all pairs of embeddings.
+    This class calculates the consensus as the reciprocal of the Jensen-Shannon divergence
     """
 
     def __init__(self, epsilon=1e-10, n_jobs=-1) -> None:
@@ -166,7 +136,7 @@ class JensenShannonDivergence(KullbackLeiblerDivergence):
 
     def transform(self, embeddings: np.ndarray) -> np.ndarray:
         """
-        Calculates the Jensen-Shannon divergence between all pairs of embeddings.
+        Calculates the reciprocal Jensen-Shannon divergence between all pairs of embeddings.
 
         Args:
             embeddings (np.ndarray): A numpy array of embeddings.
@@ -174,19 +144,18 @@ class JensenShannonDivergence(KullbackLeiblerDivergence):
         Returns:
             consensus_matrix (np.ndarray): A numpy array of Jensen-Shannon divergences.
         """
-        normalized_embeddings = self._normalize_embeddings(embeddings)
         divergence_matrix = pairwise_distances(
-            normalized_embeddings, metric=jensenshannon, n_jobs=self.n_jobs
+            embeddings, metric=jensenshannon, n_jobs=self.n_jobs
         )
-        return divergence_matrix
+        similarity_matrix = 1 / (1 + divergence_matrix)
+        return similarity_matrix
 
 
 class Correlation(ConsensusBase):
     """
     Concrete implementation of ConsensusBase using Pearson correlation.
 
-    This class calculates the consensus as the average Pearson correlation
-    between all pairs of embeddings.
+    This class calculates the consensus as absolute Pearson correlation
     """
 
     def __init__(self, epsilon=1e-10, n_jobs=-1) -> None:
@@ -196,7 +165,7 @@ class Correlation(ConsensusBase):
 
     def transform(self, embeddings: np.ndarray) -> np.ndarray:
         """
-        Calculates the Pearson correlation between all pairs of embeddings.
+        Calculates the absolute Pearson correlation between all pairs of embeddings.
 
         Args:
             embeddings (np.ndarray): A numpy array of embeddings.
@@ -207,7 +176,9 @@ class Correlation(ConsensusBase):
         # if sparse
         if isinstance(embeddings, scipy.sparse.csr_matrix):
             embeddings = embeddings.toarray()
-        correlation_matrix = pairwise_distances(
+        distance_matrix = pairwise_distances(
             embeddings, metric="correlation", n_jobs=self.n_jobs
         )
-        return correlation_matrix
+        similarity_matrix = 1 - distance_matrix
+        similarity_matrix = np.abs(similarity_matrix)
+        return similarity_matrix
