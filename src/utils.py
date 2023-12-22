@@ -661,7 +661,7 @@ def load_embeddings(processed_dir: str, num_samples: int | None = None) -> np.nd
     Returns:
         np.ndarray: Array of embeddings.
     """
-    embeddings = scipy.sparse.load_npz(os.path.join(processed_dir, "stopword_embeddings.npz"))
+    embeddings = scipy.sparse.load_npz(os.path.join(processed_dir, "embeddings.npz"))
     if num_samples:
         embeddings = embeddings[:num_samples]
     return embeddings
@@ -692,7 +692,9 @@ def filter_data(
         reviews = reviews[reviews[("beer", "name")].isin(beers_to_keep)]
     # Keep only max_nbr_reviews per beer
     if max_nbr_reviews_per_beer:
-        reviews = reviews.groupby(("beer", "name")).sample(n = max_nbr_reviews_per_beer, random_state=42)
+        reviews = reviews.groupby(("beer", "name")).sample(
+            n=max_nbr_reviews_per_beer, random_state=42
+        )
 
     # Filter out reviews with less than min_words words
     if min_words:
@@ -737,7 +739,9 @@ def load_vocab(processed_dir: str) -> np.ndarray:
 
     # Parse into an array
     vocab = sorted(
-        [(word, index) for word, index in vocab.items()], key=lambda x: x[1], reverse=False
+        [(word, index) for word, index in vocab.items()],
+        key=lambda x: x[1],
+        reverse=False,
     )
     vocab = np.array([word for word, _ in vocab])
 
