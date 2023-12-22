@@ -120,10 +120,15 @@ class StopwordExtractor(ExtractorBase):
             "finish",
             "note",
             "color",
+            ".",
+            ",",
+            ":",
+            "-",
+            ";",
         ]
         self.STOPWORDS.update(additonal_stopwords)
 
-    def transform(self, docs: List[Doc], lemmatize=False) -> List[str]:
+    def transform(self, docs: List[Doc], lemmatize=True) -> List[str]:
         """
         Removes stopwords from documents.
 
