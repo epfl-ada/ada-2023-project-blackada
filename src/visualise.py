@@ -13,6 +13,7 @@ def embeddings(
     title: str = "Embeddings",
     plot_legend: bool = True,
     ax: plt.Axes | None = None,
+    sns_config: dict | None = None,
     **kwargs,
 ):
     """
@@ -49,7 +50,7 @@ def embeddings(
         hue = hue[subset]
 
     func = getattr(sns, plot_type + "plot")
-
+    sns.set(**sns_config)
     func(
         x=embeddings[:, 0],
         y=embeddings[:, 1],
@@ -79,7 +80,7 @@ def embeddings(
             fontsize="small",
             fancybox=True,  # Rounded corners
             framealpha=0.0,  # Transparency of the frame
-            bbox_to_anchor=(0.5, -0.05),
+            bbox_to_anchor=(0.5, -0.12),
             # Use circle as marker
             handler_map={plt.Line2D: plt.Circle},
         )
