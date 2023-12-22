@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from matplotlib import pyplot as plt
 import seaborn as sns
@@ -85,3 +86,66 @@ def embeddings(
         )
     else:
         ax.get_legend().remove()
+
+
+def interpretation_barplot(
+    x: np.ndarray,
+    y: np.ndarray,
+    title: str,
+    xlabel: str,
+    ylabel: str,
+    image_path: str,
+    image_name: str,
+    seaborn_cfgs: dict,
+    plot: bool = True,
+    save: bool = True,
+):
+    """
+    Plots a barplot with the given data and saves it to the given path. Intended to be used for plotting interpretation values of TFIDF embeddings e.g. top 10 words used within a set or reviews.
+
+    Args:
+        x: x values for the barplot.
+        y: y values for the barplot.
+        title: Title of the plot.
+        xlabel: Label of the x axis.
+        ylabel: Label of the y axis.
+        image_path: Path to save the image to.
+        image_name: Name of the image.
+        seaborn_cfgs: List of seaborn configs to be used for the plot.
+        plot: Whether to plot the figure.
+        save: Whether to save the figure.
+
+    Returns:
+        None
+    """
+
+    # Create the image path if it doesn't exist
+    os.makedirs(image_path, exist_ok=True)
+
+    # Loop through the seaborn configs
+    for mode, seaborn_cfgs in seaborn_cfgs:
+        # Set the config for given mode light / dark
+        sns.set(**seaborn_cfgs)
+
+        # Plot the figure
+        fig, ax = plt.subplots(figsize=(10, 5))
+        sns.barplot(x=x, y=y, ax=ax, orient="h")
+        ax.set_title(title)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        fig.tight_layout()
+
+        # Save the figure
+        if save:
+            # Remove the file if it already exists
+            file_path = os.path.join(image_path, f"{image_name}_{mode}.png")
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+
+            fig.savefig(file_path, dpi=300)
+
+        # Plot the figure
+        if plot:
+            plt.show()
+        else:
+            plt.close()
