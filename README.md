@@ -4,7 +4,7 @@
 
 Here is a list of things that you likely want to do:
 
-- 🍿 Check out our [datastory](). TODO: add the link
+- 🍿 Check out our [datastory](https://ada-2023-project-blackada-webpage.vercel.app/). TODO: add the link
 - 🧪 Take a look at our detailed [analysis](main.ipynb) 
 
 ## 💡 Abstract
@@ -44,6 +44,7 @@ Before embedding the reviews, we implemented different options for pre-processin
 - Dummy Extraction: Use the review as-is, without any pre-processing.
 - Lemmatization: Words were lemmatized to reduce inflected words to their base form.
 - Adjective Extraction: We extract only the adjectives from the reviews.
+- Stopword Removal: We remove common words that do not add meaning to the text.
 
 Further details on the methods are discussed in [main.ipynb](main.ipynb) and [playground/extractors.ipynb](playground/extractors.ipynb) notebooks.
 
@@ -60,7 +61,7 @@ Further details on the methods are discussed in [main.ipynb](main.ipynb) and [pl
 
 ### Consensus Calculation
 
-To quantify the similarity between beer reviews, we use the mean pair-wise cosine similarity within a set of embeddings.
+To quantify the similarity between beer reviews, we use the mean pair-wise cosine similarity within a set of embeddings. 
 
 ### Analysis
 
@@ -77,7 +78,7 @@ Using CountVectorizer or TFIDF for our final analyses, we can recover the words 
 
 | Name   | Contributions                          |
 | ------ | -------------------------------------- |
-| Pierre | Embeddor Models, README, Webscrape     |
+| Pierre | Embeddor Models, README, Interpretation|
 | Ludek  | Extraction Models, EDA                 |
 | Mika   | Pipeline, EDA, Main Notebook           |
 | Peter  | Conensus calculation, Data preparation |
