@@ -4,7 +4,7 @@
 
 Here is a list of things that you likely want to do:
 
-- 🍿 Check out our [datastory](https://ada-2023-project-blackada-webpage.vercel.app/). TODO: add the link
+- 🍿 Check out our [datastory](https://ada-2023-project-blackada-webpage.vercel.app/).
 - 🧪 Take a look at our detailed [analysis](main.ipynb) 
 
 ## 💡 Abstract
@@ -79,7 +79,7 @@ Using CountVectorizer or TFIDF for our final analyses, we can recover the words 
 | Name   | Contributions                          |
 | ------ | -------------------------------------- |
 | Pierre | Embeddor Models, README, Interpretation|
-| Ludek  | Extraction Models, EDA                 |
+| Ludek  | Extraction Models, EDA, README, DataViz|
 | Mika   | Pipeline, EDA, Main Notebook           |
 | Peter  | Conensus calculation, Data preparation |
 | Chris  | EDA, Visualisations                    |
