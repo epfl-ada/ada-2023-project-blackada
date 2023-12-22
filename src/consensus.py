@@ -155,7 +155,7 @@ class Correlation(ConsensusBase):
     """
     Concrete implementation of ConsensusBase using Pearson correlation.
 
-    This class calculates the consensus as absolute Pearson correlation
+    This class calculates the consensus as Pearson correlation
     """
 
     def __init__(self, epsilon=1e-10, n_jobs=-1) -> None:
@@ -165,7 +165,7 @@ class Correlation(ConsensusBase):
 
     def transform(self, embeddings: np.ndarray) -> np.ndarray:
         """
-        Calculates the absolute Pearson correlation between all pairs of embeddings.
+        Calculates the Pearson correlation between all pairs of embeddings.
 
         Args:
             embeddings (np.ndarray): A numpy array of embeddings.
@@ -180,5 +180,4 @@ class Correlation(ConsensusBase):
             embeddings, metric="correlation", n_jobs=self.n_jobs
         )
         similarity_matrix = 1 - distance_matrix
-        similarity_matrix = np.abs(similarity_matrix)
         return similarity_matrix
