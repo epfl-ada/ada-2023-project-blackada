@@ -207,4 +207,7 @@ class Correlation(ConsensusBase):
         # if sparse
         if isinstance(embeddings, scipy.sparse.csr_matrix):
             embeddings = embeddings.toarray()
-        return pairwise_distances(embeddings, metric="correlation", n_jobs=self.n_jobs)
+        correlation_matrix = pairwise_distances(
+            embeddings, metric="correlation", n_jobs=self.n_jobs
+        )
+        return correlation_matrix

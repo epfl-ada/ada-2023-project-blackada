@@ -661,7 +661,7 @@ def load_embeddings(processed_dir: str, num_samples: int | None = None) -> np.nd
     Returns:
         np.ndarray: Array of embeddings.
     """
-    embeddings = scipy.sparse.load_npz(os.path.join(processed_dir, "embeddings.npz"))
+    embeddings = scipy.sparse.load_npz(os.path.join(processed_dir, "stopword_embeddings.npz"))
     if num_samples:
         embeddings = embeddings[:num_samples]
     return embeddings
@@ -670,9 +670,9 @@ def load_embeddings(processed_dir: str, num_samples: int | None = None) -> np.nd
 def filter_data(
     embeddings: np.ndarray,
     reviews: pd.DataFrame,
-    min_nbr_reviews: int = 10,
-    max_nbr_reviews=1000,
-    min_words=10,
+    min_nbr_reviews: int | None = 50,
+    max_nbr_reviews_per_beer: int | None = None,
+    min_words: int | None = 50,
 ) -> tuple[np.ndarray, pd.DataFrame]:
     """
     Filters the embeddings and reviews to only contain beers with at least `min_nbr_reviews` reviews.
@@ -690,9 +690,9 @@ def filter_data(
         beer_num_reviews = reviews.groupby(("beer", "name")).size()
         beers_to_keep = beer_num_reviews[beer_num_reviews >= min_nbr_reviews].index
         reviews = reviews[reviews[("beer", "name")].isin(beers_to_keep)]
-    # Keep only max_nbr_reviews for each beer
-    if max_nbr_reviews:
-        reviews = reviews.groupby(("beer", "name")).head(max_nbr_reviews)
+    # Keep only max_nbr_reviews per beer
+    if max_nbr_reviews_per_beer:
+        reviews = reviews.groupby(("beer", "name")).sample(n = max_nbr_reviews_per_beer, random_state=42)
 
     # Filter out reviews with less than min_words words
     if min_words:
